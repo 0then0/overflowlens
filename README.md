@@ -90,6 +90,8 @@ The exported report preserves decimal-string counts and fractions, source SHA-25
 
 ## Development and checks
 
+Ready-to-run builds are available from [GitHub Releases](https://github.com/0then0/overflowlens/releases). Extract the static archive and serve its directory over HTTP. Each release includes launch instructions and an archive SHA-256 checksum; Node.js and Go are not needed to use the compiled build.
+
 Dependencies are pinned in `package-lock.json`.
 
 ```sh
@@ -134,6 +136,7 @@ This command captures an official Go SDK export through an ephemeral loopback re
 - [Mathematics](docs/mathematics.md): sharp bounds, threshold decisions and exact arithmetic.
 - [SDK validation](docs/validation.md): reproduce the pinned Go SDK experiment.
 - [Design and references](docs/research.md): OpenTelemetry semantics and primary sources.
+- [Release notes](docs/releases/v0.1.0.md): downloads, launch instructions and changes in v0.1.0.
 - `src/core/`: parsing, normalization, applicability, calculation and reports, independent of React.
 - `src/App.tsx`, `src/styles.css`, `src/import.worker.ts`: browser UI and background import.
 - `tests/`: unit, exhaustive small-count, import regression, SDK and browser tests.
