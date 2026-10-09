@@ -1,0 +1,50 @@
+{
+  "resourceMetrics": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "checkout-demo"
+            }
+          }
+        ]
+      },
+      "scopeMetrics": [
+        {
+          "scope": {
+            "name": "overflowlens.demo",
+            "version": "0.1.0"
+          },
+          "metrics": [
+            {
+              "name": "http.server.requests",
+              "description": "Synthetic request counter; mathematical example, not an SDK recording",
+              "unit": "{request}",
+              "sum": {
+                "aggregationTemporality": 1,
+                "isMonotonic": true,
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "success",
+                        "value": {
+                          "boolValue": true
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1791504000000000000",
+                    "timeUnixNano": "1791504060000000000",
+                    "asInt": "0"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

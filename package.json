@@ -1,0 +1,36 @@
+{
+  "name": "overflowlens",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Exact error-rate bounds after OpenTelemetry SDK cardinality overflow",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "test:browser": "playwright test",
+    "validate:sdk": "cd validation && go run . && cd .. && vitest run tests/sdk.test.ts",
+    "format": "biome format . --write",
+    "format:check": "biome format .",
+    "lint": "biome lint . --error-on-warnings",
+    "check": "biome check . --error-on-warnings",
+    "check:fix": "biome check . --write --error-on-warnings"
+  },
+  "dependencies": {
+    "lossless-json": "4.3.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@playwright/test": "1.64.0",
+    "@types/node": "24.10.1",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.3"
+  }
+}
