@@ -29,41 +29,17 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
       - name: Package static application
-        run: |
-          python3 - <<'PY'
-          import hashlib
-          import os
-          import pathlib
-          import zipfile
-
-          tag = os.environ['GITHUB_REF_NAME']
-          name = 'overflowlens-' + tag.removeprefix('v')
-          archive = pathlib.Path(name + '.zip')
-          notes = pathlib.Path('docs/releases/' + tag + '.md').read_text()
-          readme = '# OverflowLens ' + tag + '\n\n'
-          readme += 'Extract this archive, change into its directory, and run:\n\n'
-          readme += '```sh\npython3 -m http.server 8080 --bind 127.0.0.1\n```\n\n'
-          readme += 'Open http://127.0.0.1:8080. Any static HTTP server also works. '
-          readme += 'Do not open index.html with file://. No Node.js or Go installation is needed to use this build.\n\n'
-          readme += notes + '\n\nSource and documentation: https://github.com/'
-          readme += os.environ['GITHUB_REPOSITORY'] + '/tree/' + tag + '\n'
-          with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED) as output:
-              for path in sorted(pathlib.Path('dist').rglob('*')):
-                  if path.is_file():
-                      output.write(path, name + '/' + str(path.relative_to('dist')))
-              output.write('LICENSE', name + '/LICENSE')
-              output.writestr(name + '/README.md', readme)
-          checksum = hashlib.sha256(archive.read_bytes()).hexdigest()
-          pathlib.Path('SHA256SUMS.txt').write_text(checksum + '  ' + archive.name + '\n')
-          PY
+        run: npm run package:release -- --repository "$GITHUB_REPOSITORY"
       - name: Upload and publish release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |
           archive="overflowlens-${GITHUB_REF_NAME#v}.zip"
-          gh release create "$GITHUB_REF_NAME" "$archive" SHA256SUMS.txt \
+          gh release create "$GITHUB_REF_NAME" "release/$archive" release/SHA256SUMS.txt \
             --verify-tag --draft --title "OverflowLens $GITHUB_REF_NAME" \
             --notes-file "docs/releases/$GITHUB_REF_NAME.md"
           gh release edit "$GITHUB_REF_NAME" --draft=false --latest

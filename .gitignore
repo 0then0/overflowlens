@@ -152,3 +152,6 @@ vite.config.ts.timestamp-*
 playwright-report/
 test-results/
 .DS_Store
+
+# Local static release archives
+release/

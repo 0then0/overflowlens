@@ -6,15 +6,13 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/0then0/overflowlens/ci.yml?branch=main&label=checks)](https://github.com/0then0/overflowlens/actions/workflows/ci.yml)
 [![Validated SDK](https://img.shields.io/badge/validated%20SDK-Go%201.47.0-426449)](docs/validation.md)
 
-OverflowLens calculates **exact error-rate bounds after OpenTelemetry SDK cardinality overflow**. Open a local OTLP metrics export, select a request counter and collection interval, and compare every compatible error rate with your limit.
+OverflowLens calculates **exact error-rate bounds after OpenTelemetry SDK cardinality overflow**. Import a saved request counter, choose a delta interval or a window between two cumulative snapshots, and compare the possible error rates with your limit.
 
-The application runs entirely in your browser. Imported files stay on your computer. There are no accounts, analytics, remote fonts or external application requests. The README badges are external images; they are not loaded by the application.
+Files stay on your computer. The application runs in your browser, with no accounts, uploads, analytics, remote fonts or external application requests. The badges above are external README images; the application does not load them.
 
-## Why error-rate bounds?
+## Why bounds?
 
-An SDK cardinality limit can preserve request counts while replacing measurement attributes with `otel.metric.overflow=true`. A query filtered by `success=false` then sees only the errors whose outcomes survived. The overflow count remains in the total, but its outcomes are unknown.
-
-For example:
+When an SDK reaches its cardinality limit, it can preserve request counts while replacing measurement attributes with `otel.metric.overflow=true`. The request outcome is then unknown. Filtering only by `success=false` excludes those unknown outcomes.
 
 ```text
 Known successes                 900
@@ -27,53 +25,59 @@ Maximum allowed error rate       1%
 Conclusion: Cannot determine from these data
 ```
 
-All 99 overflow requests could have succeeded, failed, or had any mixture of outcomes. OverflowLens reports the attainable bounds without guessing outcomes or assigning probabilities.
+All 99 overflow requests could have succeeded, failed, or had any mixture of outcomes. OverflowLens reports attainable bounds without guessing their outcomes or assigning probabilities.
 
-## Quick start
+## Run a published build
 
-Requires Node.js 24.21+ and npm. Go is only needed to reproduce the SDK validation experiment.
+Download a static archive from [GitHub Releases](https://github.com/0then0/overflowlens/releases), extract it, and change into the extracted `overflowlens-<version>` directory. Check that release's notes for its supported modes; cumulative windows require v0.2 or later.
+
+Start a local HTTP server, for example:
 
 ```sh
-npm ci
-npm run dev
+python3 -m http.server 8080 --bind 127.0.0.1
 ```
 
-Open the localhost URL printed by Vite:
+Open http://127.0.0.1:8080. The application files are in the extracted directory, without a nested `dist/`. Any static HTTP server works. Node.js and Go are not required to use the compiled application. `SHA256SUMS.txt` identifies the archive bytes.
 
-1. Load the built-in example or choose an OTLP JSON file.
-2. Select one metric stream and one collection interval.
-3. Enter the boolean outcome attribute, such as `success`, and choose which value means error.
-4. Confirm the data provenance contract after checking that it applies to your export.
-5. Set the maximum allowed error percentage. Equality meets the limit.
-6. Export the explanatory JSON to retain the exact inputs, bounds and conclusion.
+Use HTTPS for remote hosting. Opening `index.html` through `file://` is unsupported.
 
-The outcome key can be entered manually, including for an overflow-only interval. Changing the file, stream, interval or outcome clears dependent settings and requires a new provenance confirmation.
+## Analyze your data
 
-## Understand the result
+1. Choose **Delta interval** or **Cumulative window**. Delta accepts one OTLP JSON file or the built-in example. Cumulative requires separate **Before** and **After** exports.
+2. Select one Resource/scope/metric stream and its collection boundaries. For cumulative mode, select matching streams and inspect the pair applicability status and exact `(before, after]` window.
+3. Enter the boolean measurement outcome key, such as `success`, and select which value means error.
+4. Confirm the provenance contract after checking that it applies to your data.
+5. Enter the maximum allowed error percentage. Equality meets the limit.
+6. Export the explanatory JSON to retain the selected inputs, assumptions, exact counts, fractions and conclusion.
 
-- **Within limit**: every error rate compatible with the imported interval meets your limit.
-- **Exceeds limit**: every compatible error rate exceeds your limit.
-- **Cannot determine**: some compatible rates meet the limit and others exceed it.
-- **No observations**: the valid interval totals zero, so no error rate is defined.
-- **Invalid input / Unsupported input**: the data or assumptions do not support this calculation. Read the diagnostic before changing the input.
+Changing either file, stream, boundary, outcome, error value or mode clears the previous verdict and provenance confirmation. Changing only the threshold uses the same validated counts. The outcome key can be entered manually, including for an overflow-only interval.
 
-Malformed related data blocks a conclusion rather than silently reducing the selected stream's counts. Independent unsupported metrics do not invalidate a valid selection. See the [input contract](docs/input-contract.md) for the exact rules.
+## Interpret the result
 
-## Supported data
+- **Within limit:** every compatible error rate meets your limit.
+- **Exceeds limit:** every compatible error rate exceeds your limit.
+- **Cannot determine:** compatible rates exist on both sides of the limit.
+- **No observations:** the selected interval or window totals zero, so no error rate is defined.
+- **Invalid input / Unsupported input:** the data or assumptions do not support a calculation. The diagnostic identifies the reason.
 
-Version 0.1 accepts uncompressed UTF-8 OTLP JSON `ExportMetricsServiceRequest` files up to **5 MiB**, using lowerCamelCase field names and numeric enum values. It analyzes one Resource/scope/metric group and one complete interval of a synchronous request counter represented as a monotonic, integer, delta `Sum`.
+A refusal is different from mathematical uncertainty. Malformed related data blocks a verdict rather than silently reducing counts; an independent unsupported metric does not invalidate a supported selection.
 
-The provenance confirmation means you assert that the interval is a complete SDK export, each observation counts requests from a synchronous instrument, every request has one boolean outcome, and no downstream transformation changed counts or measurement attributes. JSON structure alone cannot prove these conditions.
+## Supported inputs
 
-Ordinary points must retain the chosen boolean measurement outcome. Resource and scope attributes are separate and cannot supply it. An SDK overflow point must have exactly one measurement attribute: `otel.metric.overflow=true`. Additional attributes make the point ambiguous, including [Cardinality Guardian](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/cardinalityguardianprocessor) `tag_only` output.
+Use uncompressed UTF-8 OTLP JSON `ExportMetricsServiceRequest` files, with lowerCamelCase field names and numeric enum values. Files are limited to **5 MiB each**, and a cumulative pair to **10 MiB combined**.
 
-The importer preserves stream identity, normalizes attribute order and equivalent byte encodings, and rejects conflicting definitions, duplicate measurement identities and overlapping unequal intervals. Decimal-string and numeric integer tokens are read without precision loss; fractional and exponent forms of integer fields are intentionally unsupported.
+Both modes analyze a synchronous request counter represented as a monotonic integer `Sum`. Every ordinary point must retain the selected boolean measurement outcome. SDK overflow must contain exactly one measurement attribute: `otel.metric.overflow=true`.
 
-OverflowLens analyzes one imported interval. It does not verify a full SLO, recover lost outcomes, query Prometheus or Grafana, convert cumulative counters, analyze histograms, or establish delivery completeness.
+- **Delta:** one complete collection interval, with common start and end timestamps.
+- **Cumulative:** two complete exports of the same stream, one collection timestamp per selected stream per file, ordered boundaries, identical measurement identity sets, known unchanged starts for corresponding series, and no decreasing counts. Different series may have different start times.
 
-## Exact arithmetic and exported reports
+Completeness, synchrony, one boolean outcome per request, genuine SDK overflow semantics and unchanged downstream counts/attribution require user confirmation. Cumulative mode also requires one continuous source history with stable ordinary attribution. Metadata and source hashes do not prove these conditions.
 
-For ordinary count `K`, known errors `E`, overflow count `O`, and total `T = K + O`:
+New or disappearing series, unknown starts and reset-spanning windows are unsupported. Missing points are never zero-filled or intersected away. The application does not aggregate processes, recover lost outcomes, ingest live metrics, provide a general temporality converter or assess a full SLO. Read the [input contract](docs/input-contract.md) for the complete rules.
+
+## Exact arithmetic and reports
+
+For ordinary requests `K`, known errors `E`, overflow requests `O`, and total `T = K + O`:
 
 ```text
 lower = E / T
@@ -84,63 +88,37 @@ otherwise       → INDETERMINATE
 T = 0           → NO_DATA
 ```
 
-Counts and comparisons use `BigInt`. The percentage limit is converted to an exact fraction. Only displayed percentages and chart positions are approximate; rounded endpoints never determine the conclusion.
+Cumulative mode first subtracts each matched point's before count from its after count. K, E and O are sums of those increments; baseline observations are excluded. Percentages and snapshot bounds are never subtracted.
 
-The exported report preserves decimal-string counts and fractions, source SHA-256, stream identity, exact nanosecond boundaries, settings, assumptions, point counts and attainable endpoint witnesses. It uses the same calculation as the UI. A source hash identifies bytes, not provenance. Read the [mathematical model](docs/mathematics.md) for the proof.
+Counts, fractions and comparisons use `BigInt`. Rounding affects display only. See [mathematics](docs/mathematics.md) for the proof and endpoint witnesses.
 
-## Development and checks
+Delta reports use schema v1. Cumulative reports use schema v2, preserving both original-file SHA-256 hashes, selected identities, exact boundaries, settings, assumptions, applicability checks, matched counts/increments, fractions and witnesses. Refusal reports retain diagnostics and selected inputs without inventing rates. A hash identifies bytes, not authenticity.
 
-Ready-to-run builds are available from [GitHub Releases](https://github.com/0then0/overflowlens/releases). Extract the static archive and serve its directory over HTTP. Each release includes launch instructions and an archive SHA-256 checksum; Node.js and Go are not needed to use the compiled build.
+## Build from source
 
-Dependencies are pinned in `package-lock.json`.
+Requires Node.js 24.21+ and npm. Dependencies are pinned in `package-lock.json`.
 
 ```sh
-npm run check
-npm test
+npm ci
+npm run dev
+```
+
+Open the localhost URL printed by Vite. To build and preview the static application:
+
+```sh
 npm run build
 npm run preview
 ```
 
-The static application is built into `dist/`, including its Worker, icon and examples. Serve this directory over HTTP or HTTPS; `file://` is unsupported. Relative asset URLs support hosting in a subdirectory. These commands build and preview locally; CI uploads a build artifact.
+The source build writes application files into `dist/`. Serve that directory locally over HTTP or remotely over HTTPS. Relative asset URLs support hosting under a subdirectory.
 
-Browser tests use the built application:
+## Documentation and development
 
-```sh
-npx playwright install chromium
-npm run test:browser
-```
-
-[Biome](https://biomejs.dev/) 2.5.15 provides formatting, recommended lint rules and import organization. Formatting uses two spaces, LF, a 100-column line width and single quotes in JavaScript/TypeScript. Warnings fail checks.
-
-```sh
-npm run format        # Apply formatting
-npm run format:check  # Check formatting without editing
-npm run lint          # Lint without editing
-npm run check         # Check formatting, lint and import organization
-npm run check:fix     # Apply formatting and safe automatic fixes
-```
-
-Biome respects `.gitignore`. SDK fixtures, example exports and `package-lock.json` are excluded to preserve recorded bytes. Markdown and workflow YAML are maintained separately; Go uses `gofmt` and `go vet`.
-
-To regenerate SDK fixtures, install Go 1.26+ and run:
-
-```sh
-npm run validate:sdk
-```
-
-This command captures an official Go SDK export through an ephemeral loopback receiver, rewrites `fixtures/sdk/`, and verifies the fresh fixtures with the TypeScript core. Timestamps and point order may change. The [SDK validation guide](docs/validation.md) explains the workload, ground truth and expected results.
-
-## Documentation and source layout
-
-- [Input contract](docs/input-contract.md): accepted representations, identity, diagnostics and report format.
-- [Mathematics](docs/mathematics.md): sharp bounds, threshold decisions and exact arithmetic.
-- [SDK validation](docs/validation.md): reproduce the pinned Go SDK experiment.
-- [Design and references](docs/research.md): OpenTelemetry semantics and primary sources.
-- [Release notes](docs/releases/v0.1.0.md): downloads, launch instructions and changes in v0.1.0.
-- `src/core/`: parsing, normalization, applicability, calculation and reports, independent of React.
-- `src/App.tsx`, `src/styles.css`, `src/import.worker.ts`: browser UI and background import.
-- `tests/`: unit, exhaustive small-count, import regression, SDK and browser tests.
-- `validation/`, `fixtures/sdk/`: Go harness, real SDK exports and ground truth manifest.
-- `public/examples/`: synthetic examples, including the built-in demonstration.
+- [Input contract](docs/input-contract.md): representations, stream identity, diagnostics and report fields.
+- [Mathematics](docs/mathematics.md): attainable bounds and exact decisions.
+- [SDK validation](docs/validation.md): the pinned Go SDK workload, fixtures and reproduction commands.
+- [Design and references](docs/research.md): OpenTelemetry semantics and implementation choices.
+- [Contributing](CONTRIBUTING.md): source layout, checks, formatting and release packaging.
+- [v0.2 release notes](docs/releases/v0.2.0.md): features and compatibility.
 
 Licensed under [Apache-2.0](LICENSE). Bundled libraries retain their licenses in [third-party notices](public/third-party-notices.txt).

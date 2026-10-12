@@ -26,6 +26,19 @@
                   {
                     "attributes": [
                       {
+                        "key": "otel.metric.overflow",
+                        "value": {
+                          "boolValue": true
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1791799218650775000",
+                    "timeUnixNano": "1791799218650818000",
+                    "asInt": "99"
+                  },
+                  {
+                    "attributes": [
+                      {
                         "key": "request.id",
                         "value": {
                           "stringValue": "known-error"
@@ -38,22 +51,9 @@
                         }
                       }
                     ],
-                    "startTimeUnixNano": "1791535622098721000",
-                    "timeUnixNano": "1791535622098756000",
+                    "startTimeUnixNano": "1791799218650775000",
+                    "timeUnixNano": "1791799218650818000",
                     "asInt": "1"
-                  },
-                  {
-                    "attributes": [
-                      {
-                        "key": "otel.metric.overflow",
-                        "value": {
-                          "boolValue": true
-                        }
-                      }
-                    ],
-                    "startTimeUnixNano": "1791535622098721000",
-                    "timeUnixNano": "1791535622098756000",
-                    "asInt": "99"
                   },
                   {
                     "attributes": [
@@ -70,8 +70,8 @@
                         }
                       }
                     ],
-                    "startTimeUnixNano": "1791535622098721000",
-                    "timeUnixNano": "1791535622098756000",
+                    "startTimeUnixNano": "1791799218650775000",
+                    "timeUnixNano": "1791799218650818000",
                     "asInt": "900"
                   }
                 ],

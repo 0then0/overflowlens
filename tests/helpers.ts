@@ -61,3 +61,37 @@ export function run(stream: Stream, overrides: Partial<Settings> = {}) {
     ...overrides,
   });
 }
+
+// Synthetic complete snapshots near the import budget, with exactly 1% window errors.
+export function largeCumulativeWindow(points = 28000) {
+  const snapshot = (end: string, count: string) =>
+    JSON.stringify({
+      resourceMetrics: [
+        {
+          scopeMetrics: [
+            {
+              metrics: [
+                {
+                  name: 'requests',
+                  sum: {
+                    isMonotonic: true,
+                    aggregationTemporality: 2,
+                    dataPoints: Array.from({ length: points }, (_, i) => ({
+                      attributes: [
+                        { key: 'success', value: { boolValue: i % 100 !== 0 } },
+                        { key: 'id', value: { intValue: String(i) } },
+                      ],
+                      asInt: count,
+                      startTimeUnixNano: '1000000000',
+                      timeUnixNano: end,
+                    })),
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  return { before: snapshot('2000000000', '100'), after: snapshot('3000000000', '101') };
+}

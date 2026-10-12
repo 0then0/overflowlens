@@ -1,0 +1,87 @@
+{
+  "resourceMetrics": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "overflowlens-validation"
+            }
+          }
+        ]
+      },
+      "scopeMetrics": [
+        {
+          "scope": {
+            "name": "overflowlens.validation",
+            "version": "0.2.0"
+          },
+          "metrics": [
+            {
+              "name": "http.server.requests",
+              "unit": "{request}",
+              "sum": {
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "request.id",
+                        "value": {
+                          "stringValue": "known-success"
+                        }
+                      },
+                      {
+                        "key": "success",
+                        "value": {
+                          "boolValue": true
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1791799218652366000",
+                    "timeUnixNano": "1791799218652377000",
+                    "asInt": "100"
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "otel.metric.overflow",
+                        "value": {
+                          "boolValue": true
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1791799218652366000",
+                    "timeUnixNano": "1791799218652377000",
+                    "asInt": "5"
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "request.id",
+                        "value": {
+                          "stringValue": "known-error"
+                        }
+                      },
+                      {
+                        "key": "success",
+                        "value": {
+                          "boolValue": false
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1791799218652366000",
+                    "timeUnixNano": "1791799218652377000",
+                    "asInt": "7"
+                  }
+                ],
+                "aggregationTemporality": 2,
+                "isMonotonic": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

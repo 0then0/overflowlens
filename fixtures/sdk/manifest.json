@@ -3123,5 +3123,1093 @@
         }
       ]
     }
+  ],
+  "cumulativeCases": [
+    {
+      "name": "cumulative",
+      "file": "",
+      "view": false,
+      "thresholdPercent": "1",
+      "expected": "INDETERMINATE",
+      "truthTotal": "1000",
+      "truthErrors": "34",
+      "K": "901",
+      "E": "1",
+      "O": "99",
+      "T": "1000",
+      "groundTruth": [
+        {
+          "success": true,
+          "requestId": "known-success",
+          "count": 900
+        },
+        {
+          "success": false,
+          "requestId": "known-error",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-000",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-001",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-002",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-003",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-004",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-005",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-006",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-007",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-008",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-009",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-010",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-011",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-012",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-013",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-014",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-015",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-016",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-017",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-018",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-019",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-020",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-021",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-022",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-023",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-024",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-025",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-026",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-027",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-028",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-029",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-030",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-031",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-032",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-033",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-034",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-035",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-036",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-037",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-038",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-039",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-040",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-041",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-042",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-043",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-044",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-045",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-046",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-047",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-048",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-049",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-050",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-051",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-052",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-053",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-054",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-055",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-056",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-057",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-058",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-059",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-060",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-061",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-062",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-063",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-064",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-065",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-066",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-067",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-068",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-069",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-070",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-071",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-072",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-073",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-074",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-075",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-076",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-077",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-078",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-079",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-080",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-081",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-082",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-083",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-084",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-085",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-086",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-087",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-088",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-089",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-090",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-091",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-092",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-093",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-094",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-095",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-096",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-097",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-098",
+          "count": 1
+        }
+      ],
+      "beforeFile": "cumulative-before.json",
+      "afterFile": "cumulative-after.json",
+      "zeroFile": "cumulative-zero.json",
+      "restartFile": "cumulative-restart.json",
+      "baselineTotal": "112",
+      "baselineOverflow": "5",
+      "baselineGroundTruth": [
+        {
+          "success": true,
+          "requestId": "known-success",
+          "count": 100
+        },
+        {
+          "success": false,
+          "requestId": "known-error",
+          "count": 7
+        },
+        {
+          "success": true,
+          "requestId": "baseline-overflow",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "name": "cumulative-view",
+      "file": "",
+      "view": true,
+      "thresholdPercent": "1",
+      "expected": "EXCEEDS_LIMIT",
+      "truthTotal": "1000",
+      "truthErrors": "34",
+      "K": "1000",
+      "E": "34",
+      "O": "0",
+      "T": "1000",
+      "groundTruth": [
+        {
+          "success": true,
+          "requestId": "known-success",
+          "count": 900
+        },
+        {
+          "success": false,
+          "requestId": "known-error",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-000",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-001",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-002",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-003",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-004",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-005",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-006",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-007",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-008",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-009",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-010",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-011",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-012",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-013",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-014",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-015",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-016",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-017",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-018",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-019",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-020",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-021",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-022",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-023",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-024",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-025",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-026",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-027",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-028",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-029",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-030",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-031",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-032",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-033",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-034",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-035",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-036",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-037",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-038",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-039",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-040",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-041",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-042",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-043",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-044",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-045",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-046",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-047",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-048",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-049",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-050",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-051",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-052",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-053",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-054",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-055",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-056",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-057",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-058",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-059",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-060",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-061",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-062",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-063",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-064",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-065",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-066",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-067",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-068",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-069",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-070",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-071",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-072",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-073",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-074",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-075",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-076",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-077",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-078",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-079",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-080",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-081",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-082",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-083",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-084",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-085",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-086",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-087",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-088",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-089",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-090",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-091",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-092",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-093",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-094",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-095",
+          "count": 1
+        },
+        {
+          "success": false,
+          "requestId": "unique-096",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-097",
+          "count": 1
+        },
+        {
+          "success": true,
+          "requestId": "unique-098",
+          "count": 1
+        }
+      ],
+      "beforeFile": "cumulative-view-before.json",
+      "afterFile": "cumulative-view-after.json",
+      "zeroFile": "cumulative-view-zero.json",
+      "restartFile": "cumulative-view-restart.json",
+      "baselineTotal": "112",
+      "baselineOverflow": "0",
+      "baselineGroundTruth": [
+        {
+          "success": true,
+          "requestId": "known-success",
+          "count": 100
+        },
+        {
+          "success": false,
+          "requestId": "known-error",
+          "count": 7
+        },
+        {
+          "success": true,
+          "requestId": "baseline-overflow",
+          "count": 5
+        }
+      ]
+    }
   ]
 }

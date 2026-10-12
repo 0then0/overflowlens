@@ -1,0 +1,62 @@
+{
+  "resourceMetrics": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "overflowlens-validation"
+            }
+          }
+        ]
+      },
+      "scopeMetrics": [
+        {
+          "scope": {
+            "name": "overflowlens.validation",
+            "version": "0.2.0"
+          },
+          "metrics": [
+            {
+              "name": "http.server.requests",
+              "unit": "{request}",
+              "sum": {
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "success",
+                        "value": {
+                          "boolValue": true
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1791799218655028000",
+                    "timeUnixNano": "1791799218655034000",
+                    "asInt": "105"
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "success",
+                        "value": {
+                          "boolValue": false
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1791799218655028000",
+                    "timeUnixNano": "1791799218655034000",
+                    "asInt": "7"
+                  }
+                ],
+                "aggregationTemporality": 2,
+                "isMonotonic": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

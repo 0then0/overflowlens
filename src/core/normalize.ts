@@ -81,7 +81,7 @@ export function normalize(raw: unknown): ImportData {
               families.set(base, family);
               let stream = streams.get(id);
               if (!stream) {
-                stream = { id, identity, intervals: [], diagnostics: [] };
+                stream = { id, identity, intervals: [], snapshots: [], diagnostics: [] };
                 streams.set(id, stream);
                 intervalMaps.set(id, new Map());
               }
@@ -97,10 +97,10 @@ export function normalize(raw: unknown): ImportData {
                     mp,
                     'UNSUPPORTED_INPUT',
                   );
-                if (temporality !== 'DELTA')
+                if (temporality !== 'DELTA' && temporality !== 'CUMULATIVE')
                   fail(
                     'UNSUPPORTED_TEMPORALITY',
-                    'Only delta temporality (aggregationTemporality: 1) is supported.',
+                    'Select delta (1) or cumulative (2) temporality.',
                     mp,
                     'UNSUPPORTED_INPUT',
                   );
@@ -136,6 +136,22 @@ export function normalize(raw: unknown): ImportData {
                   if (integer(point.asInt, `${pp}.asInt`) < 0n)
                     fail('NEGATIVE_COUNT', 'A request counter must be nonnegative.', pp);
                   if (point.flags != null) integer(point.flags, `${pp}.flags`, true, 32);
+                  if (temporality === 'CUMULATIVE') {
+                    let snapshot = stream.snapshots[0];
+                    if (snapshot && snapshot.end !== String(end))
+                      fail(
+                        'INCONSISTENT_TIMESTAMPS',
+                        'All points in the selected cumulative export must share one collection timestamp. Selecting a subset cannot establish completeness.',
+                        pp,
+                        'UNSUPPORTED_INPUT',
+                      );
+                    if (!snapshot) {
+                      snapshot = { id: String(end), end: String(end), points: [] };
+                      stream.snapshots.push(snapshot);
+                    }
+                    snapshot.points.push(materializeNumbers(point) as typeof point);
+                    continue;
+                  }
                   const intervalId = `${start}:${end}`;
                   let interval = intervals.get(intervalId);
                   if (!interval) {

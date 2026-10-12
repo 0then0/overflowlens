@@ -1,4 +1,4 @@
-// Go is used only to validate the real SDK, never as an application backend.
+// Validate SDK request-counter exports against a controlled workload.
 package main
 
 import (
@@ -42,10 +42,11 @@ type evidence struct {
 	GroundTruth      []observation `json:"groundTruth"`
 }
 type manifest struct {
-	SDK              string     `json:"sdk"`
-	Serializer       string     `json:"serializer"`
-	CardinalityLimit int        `json:"cardinalityLimit"`
-	Cases            []evidence `json:"cases"`
+	SDK              string           `json:"sdk"`
+	Serializer       string           `json:"serializer"`
+	CardinalityLimit int              `json:"cardinalityLimit"`
+	Cases            []evidence       `json:"cases"`
+	CumulativeCases  []windowEvidence `json:"cumulativeCases"`
 }
 
 func main() {
@@ -76,6 +77,19 @@ func run() error {
 			result.Cases = append(result.Cases, ev)
 			fmt.Printf("%s: K=%s E=%s O=%s T=%s truth=%s/%s → %s\n", ev.File, ev.K, ev.E, ev.O, ev.T, ev.TruthErrors, ev.TruthTotal, ev.Expected)
 		}
+	}
+	for _, view := range []bool{false, true} {
+		ev, payloads, err := cumulativeExperiment(obs, view)
+		if err != nil {
+			return fmt.Errorf("cumulative view=%v: %w", view, err)
+		}
+		for file, payload := range payloads {
+			if err := os.WriteFile(filepath.Join(out, file), payload, 0644); err != nil {
+				return err
+			}
+		}
+		result.CumulativeCases = append(result.CumulativeCases, ev)
+		fmt.Printf("%s → %s: baseline=%s overflow=%s; window K=%s E=%s O=%s T=%s truth=%s/%s → %s; zero and restart exports captured\n", ev.BeforeFile, ev.AfterFile, ev.BaselineTotal, ev.BaselineOverflow, ev.K, ev.E, ev.O, ev.T, ev.TruthErrors, ev.TruthTotal, ev.Expected)
 	}
 	b, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
@@ -174,8 +188,13 @@ func experiment(name, p, expected string, obs []observation, view bool) (evidenc
 	ev.T = fmt.Sprint(T)
 	ev.TruthTotal = fmt.Sprint(truthTotal)
 	ev.TruthErrors = fmt.Sprint(truthErrors)
+	payload, err := exportPayload(ctx, &rm)
+	return ev, payload, err
+}
+
+func exportPayload(ctx context.Context, rm *metricdata.ResourceMetrics) ([]byte, error) {
 	// Capture the real official exporter protobuf, then serialize with official protojson.
-	// No manual translation of metricdata to OTLP, and no external receiver.
+	// The disposable loopback receiver preserves the exporter payload.
 	payloads := make(chan []byte, 1)
 	errors := make(chan error, 1)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -200,18 +219,18 @@ func experiment(name, p, expected string, obs []observation, view bool) (evidenc
 	defer server.Close()
 	exporter, err := otlpmetrichttp.New(ctx, otlpmetrichttp.WithEndpointURL(server.URL), otlpmetrichttp.WithInsecure(), otlpmetrichttp.WithCompression(otlpmetrichttp.NoCompression), otlpmetrichttp.WithRetry(otlpmetrichttp.RetryConfig{Enabled: false}), otlpmetrichttp.WithHeaders(map[string]string{}))
 	if err != nil {
-		return ev, nil, err
+		return nil, err
 	}
 	defer exporter.Shutdown(ctx)
-	if err = exporter.Export(ctx, &rm); err != nil {
-		return ev, nil, err
+	if err = exporter.Export(ctx, rm); err != nil {
+		return nil, err
 	}
 	select {
 	case b := <-payloads:
-		return ev, b, nil
+		return b, nil
 	case e := <-errors:
-		return ev, nil, e
+		return nil, e
 	default:
-		return ev, nil, fmt.Errorf("no export captured")
+		return nil, fmt.Errorf("no export captured")
 	}
 }

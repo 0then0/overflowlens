@@ -21,7 +21,7 @@ jobs:
       - run: npm run test:browser
       - uses: actions/upload-artifact@v7
         with:
-          name: overflowlens-static-v0.1
+          name: overflowlens-static-v0.2
           path: dist/
   sdk-validation:
     runs-on: ubuntu-latest

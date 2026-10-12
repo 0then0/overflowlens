@@ -2,15 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import demo from '../public/examples/demo.json?raw';
 import { analyze, outcomeCandidates, type Settings } from './core/analyze';
 import { formatPercent, scalePercent } from './core/calculate';
-import { makeReport } from './core/report';
+import { type CumulativeSettings, calculateCumulative, pairCumulative } from './core/cumulative';
+import { attributes } from './core/parse';
+import { makeCumulativeReport, makeReport, type Source } from './core/report';
 import {
   type Analysis,
   CONTRACT,
+  CUMULATIVE_CONTRACT,
   type Diagnostic,
   diagnostic,
   type ImportData,
   InputError,
   MAX_FILE_BYTES,
+  MAX_PAIR_BYTES,
+  OVERFLOW,
   type Rational,
 } from './core/types';
 
@@ -29,7 +34,7 @@ const defaults: Settings = {
   threshold: '1',
   contractConfirmed: false,
 };
-type Source = { name: string; sha256: string; bytes: number };
+type Side = 'before' | 'after';
 function fraction(r: Rational) {
   return `${r.numerator} / ${r.denominator}`;
 }
@@ -87,59 +92,127 @@ function Range({
   );
 }
 export function App() {
+  const [mode, setMode] = useState<'delta' | 'cumulative'>('delta');
+  const [afterData, setAfterData] = useState<ImportData | null>(null);
+  const [afterSource, setAfterSource] = useState<Source | null>(null);
+  const [afterError, setAfterError] = useState<Diagnostic | null>(null);
+  const [afterStreamId, setAfterStreamId] = useState('');
+  const [beforeSnapshotId, setBeforeSnapshotId] = useState('');
+  const [afterSnapshotId, setAfterSnapshotId] = useState('');
+  const [afterBusy, setAfterBusy] = useState(false);
   const [data, setData] = useState<ImportData | null>(null);
   const [source, setSource] = useState<Source | null>(null);
   const [importError, setImportError] = useState<Diagnostic | null>(null);
   const [streamId, setStreamId] = useState('');
   const [settings, setSettings] = useState<Settings>(defaults);
   const [busy, setBusy] = useState(false);
-  const revision = useRef(0);
-  const importer = useRef<{ worker: Worker; cancel: () => void } | null>(null);
+  const revision = useRef({ before: 0, after: 0 });
+  const importer = useRef<Partial<Record<Side, { worker: Worker; cancel: () => void }>>>({});
+  const loaded = useRef<Partial<Record<Side, ImportData>>>({});
   useEffect(
     () => () => {
-      importer.current?.worker.terminate();
-      importer.current?.cancel();
+      for (const pending of Object.values(importer.current)) {
+        pending.worker.terminate();
+        pending.cancel();
+      }
     },
     [],
   );
   const stream = data?.streams.find((s) => s.id === streamId);
-  const candidates = useMemo(
-    () => (stream ? outcomeCandidates(stream, settings.intervalId) : []),
-    [stream, settings.intervalId],
+  const afterStream = afterData?.streams.find((s) => s.id === afterStreamId);
+  const cumulativeSettings: CumulativeSettings = useMemo(
+    () => ({
+      beforeSnapshotId,
+      afterSnapshotId,
+      outcomeAttribute: settings.outcomeAttribute,
+      errorValue: settings.errorValue,
+      threshold: settings.threshold,
+      contractConfirmed: settings.contractConfirmed,
+    }),
+    [settings, beforeSnapshotId, afterSnapshotId],
   );
-  const result: Analysis | null = useMemo(
-    () => (stream ? analyze(stream, settings) : null),
-    [stream, settings],
+  const candidates = useMemo(() => {
+    if (!stream) return [];
+    if (mode === 'delta') return outcomeCandidates(stream, settings.intervalId);
+    const keys = new Set<string>();
+    for (const p of stream.snapshots.find((s) => s.id === beforeSnapshotId)?.points ?? []) {
+      try {
+        for (const key of Object.keys(attributes(p.attributes, 'attributes')))
+          if (key !== OVERFLOW) keys.add(key);
+      } catch {
+        /* applicability reports the malformed attributes */
+      }
+    }
+    return [...keys].sort();
+  }, [stream, settings.intervalId, mode, beforeSnapshotId]);
+  const selection = useMemo(
+    () => ({
+      beforeSnapshotId,
+      afterSnapshotId,
+      outcomeAttribute: settings.outcomeAttribute,
+      errorValue: settings.errorValue,
+    }),
+    [beforeSnapshotId, afterSnapshotId, settings.outcomeAttribute, settings.errorValue],
   );
+  const pairing = useMemo(
+    () =>
+      mode === 'cumulative' && stream && afterStream
+        ? pairCumulative(stream, afterStream, selection)
+        : null,
+    [mode, stream, afterStream, selection],
+  );
+  const result: Analysis | null = useMemo(() => {
+    if (!stream || busy || afterBusy) return null;
+    if (mode === 'delta') return analyze(stream, settings);
+    return pairing ? calculateCumulative(pairing, cumulativeSettings) : null;
+  }, [stream, pairing, settings, cumulativeSettings, mode, busy, afterBusy]);
   const valid = result && 'K' in result ? result : null;
-  function reset() {
-    importer.current?.worker.terminate();
-    importer.current?.cancel();
-    importer.current = null;
-    setData(null);
-    setSource(null);
-    setImportError(null);
+  function reset(side?: Side) {
+    for (const key of side ? [side] : (['before', 'after'] as const)) {
+      importer.current[key]?.worker.terminate();
+      importer.current[key]?.cancel();
+      delete importer.current[key];
+      delete loaded.current[key];
+      if (key === 'before') {
+        setData(null);
+        setSource(null);
+        setImportError(null);
+      } else {
+        setAfterData(null);
+        setAfterSource(null);
+        setAfterError(null);
+      }
+    }
     setStreamId('');
+    setAfterStreamId('');
+    setBeforeSnapshotId('');
+    setAfterSnapshotId('');
     setSettings({ ...defaults });
   }
-  async function load(text: string, name: string, token: number) {
-    if (revision.current !== token) return;
+  async function load(
+    text: string,
+    name: string,
+    token: number,
+    side: Side = 'before',
+    originalBytes?: Uint8Array<ArrayBuffer>,
+  ) {
+    if (revision.current[side] !== token) return;
     try {
-      const bytes = new TextEncoder().encode(text);
+      const bytes = originalBytes ?? new TextEncoder().encode(text);
       const parsing = new Promise<ImportData>((resolve, reject) => {
         const worker = new Worker(new URL('./import.worker.ts', import.meta.url), {
           type: 'module',
         });
-        importer.current = { worker, cancel: () => reject(new Error('Import replaced')) };
+        importer.current[side] = { worker, cancel: () => reject(new Error('Import replaced')) };
         worker.onmessage = (event: MessageEvent<{ data?: ImportData; error?: Diagnostic }>) => {
           worker.terminate();
-          if (importer.current?.worker === worker) importer.current = null;
+          if (importer.current[side]?.worker === worker) delete importer.current[side];
           if (event.data.error) reject(new InputError(event.data.error));
           else if (event.data.data) resolve(event.data.data);
         };
         worker.onerror = () => {
           worker.terminate();
-          if (importer.current?.worker === worker) importer.current = null;
+          if (importer.current[side]?.worker === worker) delete importer.current[side];
           reject(
             new InputError({
               status: 'INVALID_INPUT',
@@ -152,19 +225,36 @@ export function App() {
         worker.postMessage(text);
       });
       const [parsed, hash] = await Promise.all([parsing, crypto.subtle.digest('SHA-256', bytes)]);
-      if (revision.current !== token) return;
-      setData(parsed);
-      setSource({
+      if (revision.current[side] !== token) return;
+      loaded.current[side] = parsed;
+      (side === 'before' ? setData : setAfterData)(parsed);
+      (side === 'before' ? setSource : setAfterSource)({
         name,
         bytes: bytes.length,
         sha256: Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join(''),
       });
-      const first = parsed.streams.find((s) => !s.diagnostics.length) ?? parsed.streams[0];
+      const first =
+        parsed.streams.find(
+          (s) =>
+            !s.diagnostics.length &&
+            s.identity.temporality === (mode === 'delta' ? 'DELTA' : 'CUMULATIVE'),
+        ) ?? parsed.streams[0];
       if (first) {
-        setStreamId(first.id);
+        (side === 'before' ? setStreamId : setAfterStreamId)(first.id);
+        (side === 'before' ? setBeforeSnapshotId : setAfterSnapshotId)(
+          first.snapshots[0]?.id ?? '',
+        );
+        const other = loaded.current[side === 'before' ? 'after' : 'before'];
+        const match = other?.streams.find((s) => s.id === first.id) ?? other?.streams[0];
+        if (match) {
+          (side === 'before' ? setAfterStreamId : setStreamId)(match.id);
+          (side === 'before' ? setAfterSnapshotId : setBeforeSnapshotId)(
+            match.snapshots[0]?.id ?? '',
+          );
+        }
         setSettings({ ...defaults, intervalId: first.intervals[0]?.id ?? '' });
       } else
-        setImportError(
+        (side === 'before' ? setImportError : setAfterError)(
           parsed.diagnostics[0] ?? {
             status: 'INVALID_INPUT',
             code: 'NO_METRICS',
@@ -172,46 +262,57 @@ export function App() {
           },
         );
     } catch (error) {
-      if (revision.current === token) setImportError(diagnostic(error));
+      if (revision.current[side] === token)
+        (side === 'before' ? setImportError : setAfterError)(diagnostic(error));
     } finally {
-      if (revision.current === token) setBusy(false);
+      if (revision.current[side] === token) (side === 'before' ? setBusy : setAfterBusy)(false);
     }
   }
-  async function importFile(file?: File) {
-    const token = ++revision.current;
-    reset();
+  async function importFile(file?: File, side: Side = 'before') {
+    const token = ++revision.current[side];
+    reset(side);
     if (!file) {
-      setBusy(false);
+      (side === 'before' ? setBusy : setAfterBusy)(false);
       return;
     }
-    if (file.size > MAX_FILE_BYTES) {
-      setBusy(false);
-      setImportError({
+    const otherBytes = (side === 'before' ? afterSource : source)?.bytes ?? 0;
+    if (file.size > MAX_FILE_BYTES || file.size + otherBytes > MAX_PAIR_BYTES) {
+      (side === 'before' ? setBusy : setAfterBusy)(false);
+      (side === 'before' ? setImportError : setAfterError)({
         status: 'INVALID_INPUT',
         code: 'FILE_TOO_LARGE',
-        message: 'The file exceeds the 5 MiB limit. Export a smaller complete interval.',
+        message:
+          'Files are limited to 5 MiB each and 10 MiB per pair. Export smaller complete snapshots.',
       });
       return;
     }
-    setBusy(true);
+    (side === 'before' ? setBusy : setAfterBusy)(true);
     try {
-      await load(await file.text(), file.name, token);
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      await load(text, file.name, token, side, bytes);
     } catch {
-      if (revision.current === token) {
-        setImportError({
+      if (revision.current[side] === token) {
+        (side === 'before' ? setImportError : setAfterError)({
           status: 'INVALID_INPUT',
           code: 'FILE_READ_FAILED',
-          message: 'The local file could not be read.',
+          message: 'The local file could not be read as UTF-8.',
         });
-        setBusy(false);
+        (side === 'before' ? setBusy : setAfterBusy)(false);
       }
     }
   }
   function exportReport() {
     if (!stream || !result || !source) return;
-    const url = URL.createObjectURL(
-      new Blob([makeReport(stream, settings, result, source)], { type: 'application/json' }),
-    );
+    if (mode === 'cumulative' && (!afterStream || !afterSource)) return;
+    const report =
+      mode === 'cumulative' && afterStream && afterSource
+        ? makeCumulativeReport(stream, afterStream, cumulativeSettings, result, {
+            before: source,
+            after: afterSource,
+          })
+        : makeReport(stream, settings, result, source);
+    const url = URL.createObjectURL(new Blob([report], { type: 'application/json' }));
     const link = document.createElement('a');
     link.href = url;
     link.download = 'overflowlens-report.json';
@@ -224,7 +325,7 @@ export function App() {
         <a className="brand" href="./">
           <img src="./icon.svg" alt="" />
           <strong>OverflowLens</strong>
-          <span className="version">v0.1</span>
+          <span className="version">v0.2</span>
         </a>
         <span className="local-badge">
           <i /> Local analysis · No uploads
@@ -244,7 +345,7 @@ export function App() {
           </p>
           <div className="intro-tags">
             <span>Exact arithmetic</span>
-            <span>One imported interval</span>
+            <span>One interval or cumulative window</span>
             <span>Explainable results</span>
           </div>
         </section>
@@ -255,11 +356,35 @@ export function App() {
                 <span className="step">01</span>
                 <h2>Bring your metrics</h2>
               </div>
+              <label>
+                Analysis mode
+                <select
+                  value={mode}
+                  onChange={(e) => {
+                    revision.current.before++;
+                    revision.current.after++;
+                    reset();
+                    setBusy(false);
+                    setAfterBusy(false);
+                    setMode(e.target.value as 'delta' | 'cumulative');
+                  }}
+                >
+                  <option value="delta">Delta interval</option>
+                  <option value="cumulative">Cumulative window</option>
+                </select>
+              </label>
+              {mode === 'cumulative' && (
+                <p className="fine">
+                  Two full exports · 5 MiB per file · 10 MiB per pair. Before is the baseline; after
+                  ends the window.
+                </p>
+              )}
               <label className="file-area" htmlFor="file">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 16V4m-4 4 4-4 4 4M4 15v5h16v-5" />
                 </svg>
                 <strong>
+                  {mode === 'cumulative' ? 'Before: ' : ''}
                   {busy ? 'Reading local file…' : (source?.name ?? 'Choose an OTLP JSON file')}
                 </strong>
                 <span>ExportMetricsServiceRequest · Up to 5 MiB</span>
@@ -273,12 +398,49 @@ export function App() {
                   }}
                 />
               </label>
+              {mode === 'cumulative' && (
+                <label className="file-area" htmlFor="after-file">
+                  <strong>
+                    After:{' '}
+                    {afterBusy
+                      ? 'Reading local file…'
+                      : (afterSource?.name ?? 'Choose an OTLP JSON file')}
+                  </strong>
+                  <span>ExportMetricsServiceRequest · Up to 5 MiB</span>
+                  <input
+                    id="after-file"
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={(e) => {
+                      void importFile(e.target.files?.[0], 'after');
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+              )}
+              {afterError && (
+                <div className="diagnostic" role="alert">
+                  <strong>After: {labels[afterError.status]}</strong>
+                  <p>{afterError.message}</p>
+                  <code>{afterError.code}</code>
+                </div>
+              )}
+              {afterData && afterData.diagnostics.length > 0 && (
+                <details>
+                  <summary>After import diagnostics</summary>
+                  {afterData.diagnostics.map((d) => (
+                    <p key={JSON.stringify(d)}>
+                      <code>{d.code}</code> {d.message}
+                    </p>
+                  ))}
+                </details>
+              )}
               <button
                 type="button"
                 className="demo-button"
-                disabled={busy}
+                disabled={busy || afterBusy || mode === 'cumulative'}
                 onClick={() => {
-                  const token = ++revision.current;
+                  const token = ++revision.current.before;
                   reset();
                   setBusy(true);
                   void load(demo, 'demo.json · mathematical example', token);
@@ -310,13 +472,16 @@ export function App() {
                 <h2>Select the interval</h2>
               </div>
               <label>
-                Metric stream
+                {mode === 'cumulative' ? 'Before metric stream' : 'Metric stream'}
                 <select
-                  disabled={!data}
+                  disabled={!data || busy || afterBusy}
                   value={streamId}
                   onChange={(e) => {
                     const s = data?.streams.find((s) => s.id === e.target.value);
                     setStreamId(e.target.value);
+                    setBeforeSnapshotId(s?.snapshots[0]?.id ?? '');
+                    setAfterStreamId('');
+                    setAfterSnapshotId('');
                     setSettings({ ...defaults, intervalId: s?.intervals[0]?.id ?? '' });
                   }}
                 >
@@ -325,7 +490,10 @@ export function App() {
                     <option key={s.id} value={s.id}>
                       {i + 1}. {s.identity.name} · {s.identity.scope.name || '(unnamed scope)'} ·{' '}
                       {s.identity.type} · {s.identity.temporality}
-                      {s.diagnostics.length ? ' · unavailable' : ''}
+                      {s.diagnostics.length ||
+                      s.identity.temporality !== (mode === 'delta' ? 'DELTA' : 'CUMULATIVE')
+                        ? ' · unavailable'
+                        : ''}
                     </option>
                   ))}
                 </select>
@@ -357,26 +525,112 @@ export function App() {
                   </dl>
                 </details>
               )}
-              <label>
-                Collection interval
-                <select
-                  disabled={!stream?.intervals.length}
-                  value={settings.intervalId}
-                  onChange={(e) => setSettings({ ...defaults, intervalId: e.target.value })}
-                >
-                  <option value="">Select an interval</option>
-                  {stream?.intervals.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {time(i.start)} → {time(i.end)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {settings.intervalId && (
-                <p className="fine">
-                  Exact boundaries (Unix nanoseconds):{' '}
-                  <code>{settings.intervalId.replace(':', ' → ')}</code>
-                </p>
+              {mode === 'delta' ? (
+                <>
+                  <label>
+                    Collection interval
+                    <select
+                      disabled={!stream?.intervals.length}
+                      value={settings.intervalId}
+                      onChange={(e) => setSettings({ ...defaults, intervalId: e.target.value })}
+                    >
+                      <option value="">Select an interval</option>
+                      {stream?.intervals.map((i) => (
+                        <option key={i.id} value={i.id}>
+                          {time(i.start)} → {time(i.end)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {settings.intervalId && (
+                    <p className="fine">
+                      Exact boundaries (Unix nanoseconds):{' '}
+                      <code>{settings.intervalId.replace(':', ' → ')}</code>
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <label>
+                    After metric stream
+                    <select
+                      disabled={!afterData || busy || afterBusy}
+                      value={afterStreamId}
+                      onChange={(e) => {
+                        const selected = afterData?.streams.find((s) => s.id === e.target.value);
+                        setAfterStreamId(e.target.value);
+                        setAfterSnapshotId(selected?.snapshots[0]?.id ?? '');
+                        setSettings({ ...defaults });
+                      }}
+                    >
+                      <option value="">Select a metric</option>
+                      {afterData?.streams.map((s, i) => (
+                        <option key={s.id} value={s.id}>
+                          {i + 1}. {s.identity.name} · {s.identity.scope.name} ·{' '}
+                          {s.identity.temporality}
+                          {s.id === stream?.id ? ' · matching identity' : ' · different identity'}
+                          {s.diagnostics.length || s.identity.temporality !== 'CUMULATIVE'
+                            ? ' · unavailable'
+                            : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Before collection timestamp
+                    <select
+                      value={beforeSnapshotId}
+                      disabled={!stream?.snapshots.length || busy || afterBusy}
+                      onChange={(e) => {
+                        setBeforeSnapshotId(e.target.value);
+                        setAfterSnapshotId('');
+                        setSettings({ ...defaults });
+                      }}
+                    >
+                      <option value="">Select a boundary</option>
+                      {stream?.snapshots.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {time(s.end)} · {s.end} ns
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    After collection timestamp
+                    <select
+                      value={afterSnapshotId}
+                      disabled={!afterStream?.snapshots.length || busy || afterBusy}
+                      onChange={(e) => {
+                        setAfterSnapshotId(e.target.value);
+                        setSettings({ ...defaults });
+                      }}
+                    >
+                      <option value="">Select a boundary</option>
+                      {afterStream?.snapshots.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {time(s.end)} · {s.end} ns
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {beforeSnapshotId && afterSnapshotId && (
+                    <p className="fine">
+                      Window (Unix nanoseconds):{' '}
+                      <code>
+                        ({beforeSnapshotId}, {afterSnapshotId}]
+                      </code>
+                    </p>
+                  )}
+                  <div aria-live="polite" data-testid="applicability" className="fine">
+                    {pairing?.status === 'APPLICABLE'
+                      ? settings.contractConfirmed
+                        ? 'Pair structurally applicable. Provenance confirmed by you.'
+                        : 'Pair structurally applicable. Provenance still requires your confirmation.'
+                      : pairing
+                        ? `${pairing.diagnostic.code}: ${pairing.diagnostic.message}`
+                        : 'Import and select both snapshots to check pair applicability.'}
+                  </div>
+                </>
               )}
             </section>
             <section className="panel">
@@ -387,13 +641,13 @@ export function App() {
               <label className="contract">
                 <input
                   type="checkbox"
-                  disabled={!stream}
+                  disabled={!stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)}
                   checked={settings.contractConfirmed}
                   onChange={(e) =>
                     setSettings((s) => ({ ...s, contractConfirmed: e.target.checked }))
                   }
                 />
-                <span>{CONTRACT}</span>
+                <span>{mode === 'cumulative' ? CUMULATIVE_CONTRACT : CONTRACT}</span>
               </label>
               <p className="fine">
                 Choose the outcome before confirming. This is your assumption. A JSON file cannot
@@ -404,7 +658,7 @@ export function App() {
                 <input
                   list="outcomes"
                   placeholder="e.g. success"
-                  disabled={!stream}
+                  disabled={!stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)}
                   value={settings.outcomeAttribute}
                   onChange={(e) =>
                     setSettings((s) => ({
@@ -426,10 +680,16 @@ export function App() {
                 <label>
                   Error value
                   <select
-                    disabled={!stream}
+                    disabled={
+                      !stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)
+                    }
                     value={String(settings.errorValue)}
                     onChange={(e) =>
-                      setSettings((s) => ({ ...s, errorValue: e.target.value === 'true' }))
+                      setSettings((s) => ({
+                        ...s,
+                        errorValue: e.target.value === 'true',
+                        contractConfirmed: false,
+                      }))
                     }
                   >
                     <option value="false">false</option>
@@ -440,7 +700,9 @@ export function App() {
                   Maximum error rate (%)
                   <input
                     inputMode="decimal"
-                    disabled={!stream}
+                    disabled={
+                      !stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)
+                    }
                     value={settings.threshold}
                     onChange={(e) => setSettings((s) => ({ ...s, threshold: e.target.value }))}
                   />
@@ -456,7 +718,9 @@ export function App() {
             >
               <div className="result-heading">
                 <span className="eyebrow">WHAT THE DATA SUPPORTS</span>
-                <span className="mini-label">INTERVAL ANALYSIS</span>
+                <span className="mini-label">
+                  {mode === 'delta' ? 'INTERVAL ANALYSIS' : 'CUMULATIVE WINDOW'}
+                </span>
               </div>
               {!result ? (
                 <div className="empty">
@@ -477,7 +741,11 @@ export function App() {
                           ? '!'
                           : '?'}
                     </span>
-                    <h2>{labels[valid.status]}</h2>
+                    <h2>
+                      {mode === 'cumulative'
+                        ? labels[valid.status].replace('imported interval', 'cumulative window')
+                        : labels[valid.status]}
+                    </h2>
                   </div>
                   {valid.lower && valid.upper ? (
                     <>
@@ -579,8 +847,8 @@ export function App() {
               <details>
                 <summary>When this model applies</summary>
                 <p>
-                  A monotonic integer Sum, delta temporality, one complete interval, and a boolean
-                  outcome on every ordinary measurement point.
+                  A synchronous monotonic integer Sum, one complete delta interval or a compatible
+                  cumulative pair, and a boolean outcome on every ordinary measurement point.
                 </p>
                 <p>
                   SDK overflow must have exactly one measurement attribute:{' '}
@@ -596,20 +864,21 @@ export function App() {
               <button
                 type="button"
                 className="export-button"
-                disabled={!result || !source}
+                disabled={!result || !source || (mode === 'cumulative' && !afterSource)}
                 onClick={exportReport}
               >
                 Export explanatory JSON <span>↓</span>
               </button>
               <p className="fine">
                 Includes exact counts and fractions, identity, interval, assumptions, source SHA-256
-                and calculation inputs.
+                and calculation inputs. Cumulative reports include both source hashes and per-point
+                increments.
               </p>
             </section>
           </div>
         </div>
         <footer>
-          <span>OverflowLens · Apache-2.0 · v0.1.0</span>
+          <span>OverflowLens · Apache-2.0 · v0.2.0</span>
           <span>Your file stays in this browser. No analytics. No remote services.</span>
         </footer>
       </main>

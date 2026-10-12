@@ -1,6 +1,6 @@
 import { calculate, thresholdPercent } from './calculate';
 import { attributes, canonical, integer } from './parse';
-import { type Analysis, diagnostic, fail, OVERFLOW, type Stream } from './types';
+import { type Analysis, diagnostic, fail, type ObjectValue, OVERFLOW, type Stream } from './types';
 export type Settings = {
   intervalId: string;
   outcomeAttribute: string;
@@ -12,6 +12,13 @@ export function analyze(stream: Stream, settings: Settings): Analysis {
   try {
     if (stream.diagnostics.length)
       return { status: stream.diagnostics[0].status, diagnostic: stream.diagnostics[0] };
+    if (stream.identity.temporality !== 'DELTA')
+      fail(
+        'UNSUPPORTED_TEMPORALITY',
+        'Delta mode requires delta temporality; use cumulative window mode for two snapshots.',
+        undefined,
+        'UNSUPPORTED_INPUT',
+      );
     if (!settings.contractConfirmed)
       fail(
         'PROVENANCE_NOT_CONFIRMED',
@@ -42,49 +49,10 @@ export function analyze(stream: Stream, settings: Settings): Analysis {
           path,
         );
       seen.add(key);
-      if (p.flags != null && integer(p.flags, `${path}.flags`, true, 32) !== 0n)
-        fail(
-          'UNSUPPORTED_FLAGS',
-          'Points flagged as missing observations or with unknown flags cannot be counted.',
-          path,
-          'UNSUPPORTED_INPUT',
-        );
-      if (p.asDouble != null)
-        fail(
-          'DOUBLE_COUNTER',
-          'asDouble is not supported. A request counter must use asInt.',
-          path,
-          'UNSUPPORTED_INPUT',
-        );
-      if (p.asInt == null) fail('MISSING_COUNT', 'The point has no asInt count.', path);
-      const n = integer(p.asInt, `${path}.asInt`);
-      if (n < 0n) fail('NEGATIVE_COUNT', 'A request counter must be nonnegative.', path);
-      let overflow = false;
-      if (Object.hasOwn(attrs, OVERFLOW)) {
-        if (attrs[OVERFLOW] !== true)
-          fail('INVALID_OVERFLOW_MARKER', 'The overflow marker must be boolValue: true.', path);
-        if (Object.keys(attrs).length !== 1)
-          fail(
-            'AMBIGUOUS_OVERFLOW',
-            'The overflow marker has additional measurement attributes. This may be Cardinality Guardian tagging, not SDK attribution loss.',
-            path,
-            'UNSUPPORTED_INPUT',
-          );
-        overflow = true;
-        O += n;
-      } else {
-        if (!Object.hasOwn(attrs, settings.outcomeAttribute))
-          fail(
-            'MISSING_OUTCOME',
-            `Every ordinary point needs the ${settings.outcomeAttribute} measurement attribute.`,
-            path,
-          );
-        if (typeof attrs[settings.outcomeAttribute] !== 'boolean')
-          fail(
-            'NON_BOOLEAN_OUTCOME',
-            'The selected outcome must be a boolValue on every ordinary point.',
-            path,
-          );
+      const { count, overflow } = readPoint(p, settings.outcomeAttribute, path);
+      const n = BigInt(count);
+      if (overflow) O += n;
+      else {
         K += n;
         if (attrs[settings.outcomeAttribute] === settings.errorValue) E += n;
       }
@@ -107,4 +75,53 @@ export function outcomeCandidates(stream: Stream, intervalId: string): string[] 
     }
   }
   return [...keys].sort();
+}
+
+// Shared wire/count/outcome validation; temporality and pairing remain separate.
+export function readPoint(p: ObjectValue, outcomeAttribute: string, path: string) {
+  const attrs = attributes(p.attributes, `${path}.attributes`);
+  if (p.flags != null && integer(p.flags, `${path}.flags`, true, 32) !== 0n)
+    fail(
+      'UNSUPPORTED_FLAGS',
+      'Points flagged as missing observations or with unknown flags cannot be counted.',
+      path,
+      'UNSUPPORTED_INPUT',
+    );
+  if (p.asDouble != null)
+    fail(
+      'DOUBLE_COUNTER',
+      'asDouble is not supported. A request counter must use asInt.',
+      path,
+      'UNSUPPORTED_INPUT',
+    );
+  if (p.asInt == null) fail('MISSING_COUNT', 'The point has no asInt count.', path);
+  const n = integer(p.asInt, `${path}.asInt`);
+  if (n < 0n) fail('NEGATIVE_COUNT', 'A request counter must be nonnegative.', path);
+  let overflow = false;
+  if (Object.hasOwn(attrs, OVERFLOW)) {
+    if (attrs[OVERFLOW] !== true)
+      fail('INVALID_OVERFLOW_MARKER', 'The overflow marker must be boolValue: true.', path);
+    if (Object.keys(attrs).length !== 1)
+      fail(
+        'AMBIGUOUS_OVERFLOW',
+        'The overflow marker has additional measurement attributes. This may be Cardinality Guardian tagging, not SDK attribution loss.',
+        path,
+        'UNSUPPORTED_INPUT',
+      );
+    overflow = true;
+  } else {
+    if (!Object.hasOwn(attrs, outcomeAttribute))
+      fail(
+        'MISSING_OUTCOME',
+        `Every ordinary point needs the ${outcomeAttribute} measurement attribute.`,
+        path,
+      );
+    if (typeof attrs[outcomeAttribute] !== 'boolean')
+      fail(
+        'NON_BOOLEAN_OUTCOME',
+        'The selected outcome must be a boolValue on every ordinary point.',
+        path,
+      );
+  }
+  return { attributes: attrs, count: n.toString(), overflow };
 }
