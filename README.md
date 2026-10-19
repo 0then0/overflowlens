@@ -27,6 +27,16 @@ Conclusion: Cannot determine from these data
 
 All 99 overflow requests could have succeeded, failed, or had any mixture of outcomes. OverflowLens reports attainable bounds without guessing their outcomes or assigning probabilities.
 
+## Screenshots
+
+**Delta interval.** The built-in example has 900 known successes, one known error and 99 overflow requests. Its possible error rate is 0.1%…10%, so a 1% limit cannot be decided from these data. The result includes exact counts, attainable bounds and an explanatory JSON export.
+
+![Delta interval analysis showing the imported example, confirmed assumptions, 0.1% to 10% error-rate bounds and exact counts](docs/screenshots/delta-analysis.png)
+
+**Cumulative window.** Two snapshots from the [Go SDK validation workload](docs/validation.md) define the selected window. The application checks that the pair is structurally applicable and calculates bounds from per-point increments, excluding baseline observations.
+
+![Cumulative window analysis showing separate Before and After imports, selected collection timestamps, pair applicability and bounds for 1,000 requests](docs/screenshots/cumulative-window.png)
+
 ## Run a published build
 
 Download a static archive from [GitHub Releases](https://github.com/0then0/overflowlens/releases), extract it, and change into the extracted `overflowlens-<version>` directory. Check that release's notes for its supported modes; cumulative windows require v0.2 or later.
