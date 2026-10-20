@@ -50,6 +50,14 @@ go vet ./...
 
 `validate:sdk` rewrites SDK fixtures. Run it separately from tests that read those files. Review those changes as captured exports, preserving their bytes. See [SDK validation](docs/validation.md) for expected results and the distinction between real exports and synthetic controls.
 
+## Dependency updates
+
+[Dependabot](.github/dependabot.yml) checks npm packages, the Go validation harness and GitHub Actions on the first day of each month at 10:00 Europe/Moscow. Version updates wait at least seven days after publication. Minor and patch updates are grouped into one PR per ecosystem, with at most three regular dependency PRs open across the repository. Major upgrades are reviewed and applied manually. Updates require review and passing CI; they are not automatically merged.
+
+For Go SDK updates, regenerate and review the fixtures with `npm run validate:sdk`, and update the documented SDK version and validation results as needed. A dependency-only change does not establish compatibility with a new SDK version.
+
+Dependabot security updates, when enabled in the repository settings, use a separate schedule and PR limit. The monthly schedule and cooldown do not delay them. Ignore rules still apply; review security fixes that require a major upgrade manually. See the [GitHub configuration reference](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference) for these distinctions.
+
 ## Formatting and conventions
 
 Biome checks formatting, recommended lint rules and import organization. Use two spaces, LF, single quotes in JavaScript/TypeScript, and a 100-column line width. Warnings fail checks.
