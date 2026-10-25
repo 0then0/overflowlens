@@ -21,7 +21,8 @@ function markdown(directory: string): string[] {
 }
 
 test('public documentation links resolve within the repository', () => {
-  for (const file of ['README.md', 'CONTRIBUTING.md', ...markdown('docs')]) {
+  const rootDocuments = readdirSync('.').filter((file) => file.endsWith('.md'));
+  for (const file of [...rootDocuments, ...markdown('docs'), ...markdown('.github')]) {
     for (const link of readFileSync(file, 'utf8').matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
       const target = link[1].split('#')[0];
       if (!target || /^https?:\/\//.test(target)) continue;

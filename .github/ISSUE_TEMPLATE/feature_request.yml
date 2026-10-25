@@ -1,0 +1,23 @@
+name: Feature request
+description: Propose an improvement within the local metrics-analysis workflow.
+title: 'Feature: '
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: Describe the task you cannot complete and any current workaround.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Include alternatives and synthetic examples where useful. Do not share private telemetry.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Compatibility and scope
+      description: Explain any impact on supported inputs, exact bounds, reports or local processing.

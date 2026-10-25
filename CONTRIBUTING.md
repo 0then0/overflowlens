@@ -2,6 +2,12 @@
 
 OverflowLens is a static browser application. Its core parses and analyzes saved OTLP exports independently of React. Keep changes within that model and preserve exact arithmetic, conservative refusals and local processing.
 
+## Issues and pull requests
+
+Use the repository's bug or feature issue form. Include a release or commit, reproduction steps and a minimal synthetic export for bugs. Follow the [code of conduct](CODE_OF_CONDUCT.md) and use the [security reporting process](SECURITY.md) for potential vulnerabilities. Do not publish private telemetry.
+
+Keep pull requests focused, complete the PR template and state which checks you ran. Update the [changelog](CHANGELOG.md) for user-visible changes. Application behavior, report schemas and supported inputs need matching documentation and meaningful regression coverage.
+
 ## Development environment
 
 Use Node.js 24.21+ and npm with the checked-in `package-lock.json`:
@@ -70,6 +76,8 @@ npm run check:fix
 ```
 
 Fixtures, bundled examples and `package-lock.json` are excluded from Biome to preserve recorded bytes. Markdown and workflow YAML are maintained separately. Format Go with `gofmt`.
+
+`.editorconfig` defines editor defaults, including Go tabs and Python's four-space indentation. `.gitattributes` normalizes ordinary text to LF and marks binary assets appropriately. Captured SDK fixtures and bundled JSON examples are excluded from Git line-ending conversion and editor whitespace cleanup so their original bytes remain intact. Do not normalize or reformat them as part of unrelated work. Keep lockfiles, fixtures and screenshots tracked; `.gitignore` excludes dependencies, builds, local configuration and verification artifacts.
 
 Use Conventional Commits in English with `feat`, `fix`, `refactor`, `chore`, `docs` or `test`. Describe behavior and verification in pull requests. Add tests for meaningful regressions; do not replace exact comparisons with rounded display values or treat missing points as zero.
 

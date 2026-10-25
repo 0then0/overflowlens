@@ -1,0 +1,14 @@
+* text=auto eol=lf
+
+# Preserve captured JSON bytes across platforms; hashes identify original bytes.
+fixtures/sdk/** -text -filter -ident
+public/examples/** -text -filter -ident
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.zip binary
+*.pdf binary

@@ -1,0 +1,45 @@
+name: Bug report
+description: Report a reproducible problem with analysis, import, export or the interface.
+title: 'Bug: '
+body:
+  - type: markdown
+    attributes:
+      value: Read SECURITY.md for vulnerabilities. Do not attach private telemetry or credentials. Use a minimal synthetic export instead.
+  - type: input
+    id: version
+    attributes:
+      label: Release or commit
+      placeholder: v0.2.0 or a commit SHA
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser, operating system and launch method
+      placeholder: Chromium version, OS version, release archive served over localhost HTTP
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Analysis mode
+      options:
+        - Delta interval
+        - Cumulative window
+        - Both or not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps and minimal synthetic input
+      description: Include selected streams, boundaries, outcome key, error value and threshold where relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual behavior
+      description: Include diagnostic codes or sanitized screenshots if relevant. Explain why you expect a different result.
+    validations:
+      required: true

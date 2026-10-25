@@ -129,6 +129,9 @@ The source build writes application files into `dist/`. Serve that directory loc
 - [SDK validation](docs/validation.md): the pinned Go SDK workload, fixtures and reproduction commands.
 - [Design and references](docs/research.md): OpenTelemetry semantics and implementation choices.
 - [Contributing](CONTRIBUTING.md): source layout, checks, formatting and release packaging.
+- [Changelog](CHANGELOG.md): released features and unreleased changes.
+- [Security policy](SECURITY.md): supported versions, reporting and the local-processing security model.
+- [Code of conduct](CODE_OF_CONDUCT.md): participation and moderation rules.
 - [v0.2 release notes](docs/releases/v0.2.0.md): features and compatibility.
 
 Licensed under [Apache-2.0](LICENSE). Bundled libraries retain their licenses in [third-party notices](public/third-party-notices.txt).
