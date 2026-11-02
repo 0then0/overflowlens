@@ -878,7 +878,7 @@ export function App() {
           </div>
         </div>
         <footer>
-          <span>OverflowLens · Apache-2.0 · v0.2.0</span>
+          <span>OverflowLens · Apache-2.0 · v0.2.1</span>
           <span>Your file stays in this browser. No analytics. No remote services.</span>
         </footer>
       </main>

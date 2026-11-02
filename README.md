@@ -139,6 +139,7 @@ The source build writes application files into `dist/`. Serve that directory loc
 - [Changelog](CHANGELOG.md): released features and unreleased changes.
 - [Security policy](SECURITY.md): supported versions, reporting and the local-processing security model.
 - [Code of conduct](CODE_OF_CONDUCT.md): participation and moderation rules.
-- [v0.2 release notes](docs/releases/v0.2.0.md): features and compatibility.
+- [v0.2.1 release notes](docs/releases/v0.2.1.md): changes in the latest release.
+- [v0.2 release notes](docs/releases/v0.2.0.md): cumulative windows and compatibility.
 
 Licensed under [Apache-2.0](LICENSE). Bundled libraries retain their licenses in [third-party notices](public/third-party-notices.txt).

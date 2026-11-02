@@ -2,7 +2,7 @@
 
 This file summarizes user-visible changes. Detailed compatibility and launch instructions are in the linked release notes. Unreleased changes are available on the default branch and are not included in existing release archives.
 
-## Unreleased
+## [0.2.1](docs/releases/v0.2.1.md)
 
 - Redesign the interface as a dark developer console with hairline borders, graphite surfaces and a single green action, and follow the system light or dark setting. Fonts are Red Hat when installed, otherwise Inter or system fonts; nothing loads remotely.
 - Refresh the project icon: a lens focused on an interval, in the new palette. Regenerate the README screenshots at 2x.
