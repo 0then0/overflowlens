@@ -4,7 +4,7 @@ This file summarizes user-visible changes. Detailed compatibility and launch ins
 
 ## Unreleased
 
-- Prepare GitHub Pages distribution of v0.2.1 through an explicit, verified source commit, preserving downloadable archives and relative assets. Publication is pending.
+- Prepare GitHub Pages distribution of v0.2.1 through an explicit, verified source commit, preserving downloadable archives and relative assets. The browser distribution is published on GitHub Pages.
 - Bundle the synthetic SDK cumulative before/after example, show the exact application version and clarify local data processing.
 - Exercise production assets and the Worker under `/overflowlens/`, including imports, report export, privacy, mobile and system themes.
 

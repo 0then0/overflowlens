@@ -39,7 +39,7 @@ All 99 overflow requests could have succeeded, failed, or had any mixture of out
 
 ## Open app
 
-[Open app](https://0then0.github.io/overflowlens/) **(deployment pending; not yet available)**. This browser URL is prepared for GitHub Pages; it is not a verified publication. Use the downloadable build below until deployment is confirmed. The [deployment guide](docs/deployment.md) records the source policy and remaining setup.
+[Open app](https://0then0.github.io/overflowlens/) in your browser. Try the delta or cumulative example, or import your own OTLP JSON files. No installation is required. The downloadable build below remains available for local use. See the [deployment guide](docs/deployment.md) for the verified source and update policy.
 
 ## Run a published build
 

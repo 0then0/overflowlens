@@ -1,7 +1,16 @@
 # GitHub Pages distribution
 
-Planned URL: https://0then0.github.io/overflowlens/ **(deployment pending)**.
-On 2026-11-02 the URL returned HTTP 404, repository metadata had `has_pages: false`
+Public app: https://0then0.github.io/overflowlens/.
+
+Published on 2026-11-02 from distribution commit
+`6e68396b5b4f28daa3adc34111689b4a6080e38d`, application version 0.2.1.
+[Deployment run](https://github.com/0then0/overflowlens/actions/runs/41475058436)
+succeeded. The live HTTPS smoke test passed for delta and cumulative examples,
+a synthetic local import, threshold changes, Worker loading and JSON exports.
+Network interception observed only application assets, with no fetch, XHR,
+WebSocket or sendBeacon calls during analysis and export.
+
+Before deployment on 2026-11-02, the URL returned HTTP 404, repository metadata had `has_pages: false`
 and an empty homepage, and the Pages API returned 404. No remote setting or deployment
 was changed during local preparation.
 
@@ -48,9 +57,9 @@ The archive test separately packages and serves the extracted build at its root.
 `base: './'` is intentionally retained so both distributions use relative assets.
 There is no service worker, telemetry or update mechanism.
 
-## Remaining remote actions
+## Deployment procedure
 
-After reviewing and committing/pushing these local changes through the normal process:
+For a future deployment, review and commit/push its source through the normal process:
 
 1. In repository **Settings → Pages**, select **GitHub Actions** as the build source.
    Review the `github-pages` environment rules so the manual workflow may deploy.
@@ -66,7 +75,7 @@ After reviewing and committing/pushing these local changes through the normal pr
 3. Wait for deployment success, inspect `/overflowlens/deployment.json`, then smoke-test
    both examples and a local import/export at the real HTTPS URL. A local build does
    not prove remote publication.
-4. After that test, remove the pending wording in the README and catalogue. Set the
+4. After that test, update the README and catalogue if needed. Set the
    repository's **About → Website** to `https://0then0.github.io/overflowlens/` (or
    `gh repo edit 0then0/overflowlens --homepage https://0then0.github.io/overflowlens/`).
    No existing repository metadata automation was found; this is a manual metadata change.
