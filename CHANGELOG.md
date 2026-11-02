@@ -4,6 +4,9 @@ This file summarizes user-visible changes. Detailed compatibility and launch ins
 
 ## Unreleased
 
+- Redesign the interface as a dark developer console with hairline borders, graphite surfaces and a single green action, and follow the system light or dark setting. Fonts are Red Hat when installed, otherwise Inter or system fonts; nothing loads remotely.
+- Refresh the project icon: a lens focused on an interval, in the new palette. Regenerate the README screenshots at 2x.
+- Validate OverflowLens against OTLP exported through a pinned OpenTelemetry Collector, with a Prometheus evidence channel and a negative control that drops overflow downstream. The product and its mathematics are unchanged.
 - Add high-resolution screenshots of delta and cumulative analysis to the README.
 - Configure monthly grouped Dependabot updates with a seven-day cooldown and limited open PRs.
 - Add editor and Git conventions, contribution templates, community rules and a security reporting policy.

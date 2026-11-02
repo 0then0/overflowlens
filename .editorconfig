@@ -19,7 +19,7 @@ indent_size = 4
 trim_trailing_whitespace = false
 
 # Captured bytes are part of the SDK evidence and source hashes.
-[{fixtures/sdk/**,public/examples/**}]
+[{fixtures/sdk/**,fixtures/collector/**,public/examples/**}]
 charset = unset
 end_of_line = unset
 insert_final_newline = unset

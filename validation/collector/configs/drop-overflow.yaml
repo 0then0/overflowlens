@@ -1,0 +1,40 @@
+# Negative control: identical to positive.yaml except that one filter processor
+# drops only the SDK overflow data points of the selected request counter.
+# This is deliberate downstream loss; OverflowLens cannot detect it from the output.
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  filter/drop_overflow:
+    error_mode: propagate
+    metrics:
+      datapoint:
+        - 'metric.name == "http.server.requests" and datapoint.attributes["otel.metric.overflow"] == true'
+
+exporters:
+  otlp_http/sink:
+    endpoint: ${env:OVERFLOWLENS_SINK_ENDPOINT}
+    encoding: proto
+    compression: none
+    timeout: 10s
+    retry_on_failure:
+      enabled: false
+    sending_queue:
+      enabled: false
+  prometheus:
+    endpoint: 0.0.0.0:8889
+
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [filter/drop_overflow]
+      exporters: [otlp_http/sink, prometheus]

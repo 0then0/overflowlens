@@ -17,7 +17,7 @@ npm ci
 npm run dev
 ```
 
-Python 3 is needed for static release packaging and its tests. Go 1.26+ is needed only to regenerate SDK fixtures. The harness dependencies are pinned in `validation/go.mod` and `validation/go.sum`.
+Python 3 is needed for static release packaging and its tests. Go 1.26+ is needed only to regenerate SDK fixtures or run the Collector lab, which also needs Docker. The harness dependencies are pinned in `validation/go.mod` and `validation/go.sum`.
 
 ## Source layout
 
@@ -28,6 +28,7 @@ Python 3 is needed for static release packaging and its tests. Go 1.26+ is neede
 - `tests/`: core, import, SDK fixture and documentation tests.
 - `tests/browser/`: production-build acceptance, responsiveness and archive tests.
 - `validation/`, `fixtures/sdk/`: Go SDK harness, real exports and ground truth manifest.
+- `validation/collector/`, `fixtures/collector/`: Docker-based Collector lab, its pinned configurations and captured evidence.
 - `scripts/package-release.py`: the packager shared by local builds, browser tests and the release workflow.
 
 Keep parsing, applicability, calculation and presentation separate. Cumulative matching prepares the selected window's increments and totals; threshold or provenance changes reuse that preparation. File, stream, boundary or outcome changes must invalidate dependent selections and confirmation.
@@ -54,6 +55,8 @@ cd validation
 go vet ./...
 ```
 
+The Collector lab needs Docker and is separate from every other check. `npm run validate:collector:prepare` pulls the digest-pinned image and is the only step that downloads it; `npm run validate:collector` runs the lab against disposable loopback resources and compares its semantic content with `fixtures/collector/`. It never overwrites evidence unless `--out ... --replace` is passed. See [Collector validation](docs/collector-validation.md).
+
 `validate:sdk` rewrites SDK fixtures. Run it separately from tests that read those files. Review those changes as captured exports, preserving their bytes. See [SDK validation](docs/validation.md) for expected results and the distinction between real exports and synthetic controls.
 
 ## Dependency updates
@@ -75,7 +78,7 @@ npm run lint
 npm run check:fix
 ```
 
-Fixtures, bundled examples and `package-lock.json` are excluded from Biome to preserve recorded bytes. Markdown and YAML are explicitly excluded from Biome and maintained separately, including after formatter upgrades. Format Go with `gofmt`.
+Fixtures (including `fixtures/collector/`), bundled examples and `package-lock.json` are excluded from Biome to preserve recorded bytes. Markdown and YAML are explicitly excluded from Biome and maintained separately, including after formatter upgrades. Format Go with `gofmt`.
 
 `.editorconfig` defines editor defaults, including Go tabs and Python's four-space indentation. `.gitattributes` normalizes ordinary text to LF and marks binary assets appropriately. Captured SDK fixtures and bundled JSON examples are excluded from Git line-ending conversion and editor whitespace cleanup so their original bytes remain intact. Do not normalize or reformat them as part of unrelated work. Keep lockfiles, fixtures and screenshots tracked; `.gitignore` excludes dependencies, builds, local configuration and verification artifacts.
 

@@ -1,0 +1,9 @@
+# HELP http_server_requests 
+# TYPE http_server_requests counter
+http_server_requests_total{instance="lab-instance-1",job="overflowlens-validation",otel_metric_overflow="true",otel_scope_name="overflowlens.validation",otel_scope_schema_url="",otel_scope_version="0.2.0"} 5.0
+http_server_requests_total{instance="lab-instance-1",job="overflowlens-validation",otel_scope_name="overflowlens.validation",otel_scope_schema_url="",otel_scope_version="0.2.0",request_id="known-error",success="false"} 7.0
+http_server_requests_total{instance="lab-instance-1",job="overflowlens-validation",otel_scope_name="overflowlens.validation",otel_scope_schema_url="",otel_scope_version="0.2.0",request_id="known-success",success="true"} 100.0
+# HELP target_info Target metadata
+# TYPE target_info gauge
+target_info{deployment_environment_name="collector-lab",instance="lab-instance-1",job="overflowlens-validation"} 1.0
+# EOF

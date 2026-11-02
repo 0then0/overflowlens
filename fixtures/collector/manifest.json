@@ -1,0 +1,1625 @@
+{
+  "groundTruth": {
+    "baselineObservations": [
+      {
+        "success": true,
+        "requestId": "known-success",
+        "count": 100
+      },
+      {
+        "success": false,
+        "requestId": "known-error",
+        "count": 7
+      },
+      {
+        "success": true,
+        "requestId": "baseline-overflow",
+        "count": 5
+      }
+    ],
+    "baselineTotal": 112,
+    "observations": [
+      {
+        "success": true,
+        "requestId": "known-success",
+        "count": 900
+      },
+      {
+        "success": false,
+        "requestId": "known-error",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-000",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-001",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-002",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-003",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-004",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-005",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-006",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-007",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-008",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-009",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-010",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-011",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-012",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-013",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-014",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-015",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-016",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-017",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-018",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-019",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-020",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-021",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-022",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-023",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-024",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-025",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-026",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-027",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-028",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-029",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-030",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-031",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-032",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-033",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-034",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-035",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-036",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-037",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-038",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-039",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-040",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-041",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-042",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-043",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-044",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-045",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-046",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-047",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-048",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-049",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-050",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-051",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-052",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-053",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-054",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-055",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-056",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-057",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-058",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-059",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-060",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-061",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-062",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-063",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-064",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-065",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-066",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-067",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-068",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-069",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-070",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-071",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-072",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-073",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-074",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-075",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-076",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-077",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-078",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-079",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-080",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-081",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-082",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-083",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-084",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-085",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-086",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-087",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-088",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-089",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-090",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-091",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-092",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-093",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-094",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-095",
+        "count": 1
+      },
+      {
+        "success": false,
+        "requestId": "unique-096",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-097",
+        "count": 1
+      },
+      {
+        "success": true,
+        "requestId": "unique-098",
+        "count": 1
+      }
+    ],
+    "truthErrors": 34,
+    "truthTotal": 1000
+  },
+  "pinned": {
+    "configSha256": {
+      "drop-overflow": "4ddc697c9f5626d4a01723c34aad17fd9eaffc57e50afe8989d41a2689c2c67f",
+      "positive": "4fdc5ad6858ab70fa167a20cf4cc8dbbde5c1793aa1d52b3f8c01b0c60f09ffa",
+      "positive-openmetrics": "e300cb49ba6481f1bdebaba60f16574dfb40d6e961ee80ddc9b75db676fd535e"
+    },
+    "image": "otel/opentelemetry-collector-contrib@sha256:7f22d2a6748110ffb6a59bc0df448bccbf501cdb667d610ede4c61d3863d5849",
+    "version": "0.163.2",
+    "workloadSeed": "known-success 900, known-error 1, unique-000..098 (33 errors); baseline 100/7/5 before the first snapshot; SDK cardinality limit 3"
+  },
+  "provenance": {
+    "artifactSha256": {
+      "drop-overflow-after.json": "418fa54d2e5fe8e1fab3d12ff965e68d6b07807975d88db9e3d237005726f8a3",
+      "drop-overflow-after.pb": "c34b6555e83ac6005dc83d9c34a477d02dc591af2c1daa1caf6594c10600c110",
+      "drop-overflow-before.json": "94571caaf14f0750ad1826f16f9bb7cf4d37ab7f8ed8c99a44b3afe635adeb0f",
+      "drop-overflow-before.pb": "1220d3fb4ec191bc91122e0cbf4529978d3091ce09d3f4e2e5833a04823ea828",
+      "drop-overflow-prometheus-after-probe.prom": "2ef039f796ce14e3eb0e1cdad8a5f89601d48356aeb18e9602628efd8d0a134a",
+      "drop-overflow-prometheus-after-reexport.prom": "2ef039f796ce14e3eb0e1cdad8a5f89601d48356aeb18e9602628efd8d0a134a",
+      "drop-overflow-prometheus-after-repeat.prom": "2ef039f796ce14e3eb0e1cdad8a5f89601d48356aeb18e9602628efd8d0a134a",
+      "drop-overflow-prometheus-after.prom": "2ef039f796ce14e3eb0e1cdad8a5f89601d48356aeb18e9602628efd8d0a134a",
+      "drop-overflow-prometheus-before.prom": "df786fee8debe171edefbe163d901e633db8ada37d2d29acafc991f20a72dcfa",
+      "drop-overflow-prometheus-zero.prom": "2ef039f796ce14e3eb0e1cdad8a5f89601d48356aeb18e9602628efd8d0a134a",
+      "drop-overflow-zero.json": "609f550b48c5b0a36eff95150c4b27afcdf9f8528ddd254552c3fd900185f13e",
+      "drop-overflow-zero.pb": "21dbf164772e85f30182a9ec0ab0e7daa9784fbd4a1244ac04707751ac55ae68",
+      "positive-after.json": "37c4ce9f837b3885b4650d46db9eb5728217bd4e24c8db2195b7628ecfe32848",
+      "positive-after.pb": "4c3097ad26395f557a95700240fb7bc957da8140791e8a997955772cfc435bec",
+      "positive-before.json": "db9100fd7f8407c302ca37f71cad609e4bcd5c3802d52a21300c1df55ea3ba0f",
+      "positive-before.pb": "28977a70ae1c809648687c20960c4ec1f07f722a836cc6770070a7f0bc67dcf2",
+      "positive-openmetrics-prometheus-after-probe.prom": "aa74001d32032fe5bace49f12fe891119fae5ea2c0c717141c5c66c84081b533",
+      "positive-openmetrics-prometheus-after-reexport.prom": "985d8a68321d427bf3078ed621d5c205bb35771df3478b7b9f5a9c39834e6a30",
+      "positive-openmetrics-prometheus-after-repeat.prom": "985d8a68321d427bf3078ed621d5c205bb35771df3478b7b9f5a9c39834e6a30",
+      "positive-openmetrics-prometheus-after.prom": "985d8a68321d427bf3078ed621d5c205bb35771df3478b7b9f5a9c39834e6a30",
+      "positive-openmetrics-prometheus-before.prom": "1e041f5ab2a28f4b85fa576ad08f30fbcdd82d8df1f175b20b985220cdabe6b9",
+      "positive-openmetrics-prometheus-zero.prom": "985d8a68321d427bf3078ed621d5c205bb35771df3478b7b9f5a9c39834e6a30",
+      "positive-prometheus-after-probe.prom": "aa74001d32032fe5bace49f12fe891119fae5ea2c0c717141c5c66c84081b533",
+      "positive-prometheus-after-reexport.prom": "aa74001d32032fe5bace49f12fe891119fae5ea2c0c717141c5c66c84081b533",
+      "positive-prometheus-after-repeat.prom": "aa74001d32032fe5bace49f12fe891119fae5ea2c0c717141c5c66c84081b533",
+      "positive-prometheus-after.prom": "aa74001d32032fe5bace49f12fe891119fae5ea2c0c717141c5c66c84081b533",
+      "positive-prometheus-before.prom": "e47d444dd5f1dd7c63938c69bce491044ef6da461c41f7f6f5e606f59bfa6fd5",
+      "positive-prometheus-zero.prom": "aa74001d32032fe5bace49f12fe891119fae5ea2c0c717141c5c66c84081b533",
+      "positive-zero.json": "c27550e4d5820ffe31035d1d35c972d87a38ec506bc295675141483117343e2a",
+      "positive-zero.pb": "1bdd712e1839b2f1b2140b9cfa58ba788e09d1a577fb515a5209f286fbb54f6c"
+    },
+    "environment": {
+      "collector": {
+        "digest": "sha256:7f22d2a6748110ffb6a59bc0df448bccbf501cdb667d610ede4c61d3863d5849",
+        "image": "otel/opentelemetry-collector-contrib",
+        "local": {
+          "imageId": "sha256:7f22d2a6748110ffb6a59bc0df448bccbf501cdb667d610ede4c61d3863d5849",
+          "os": "linux",
+          "architecture": "arm64",
+          "repoDigests": [
+            "otel/opentelemetry-collector-contrib@sha256:7f22d2a6748110ffb6a59bc0df448bccbf501cdb667d610ede4c61d3863d5849"
+          ]
+        },
+        "reference": "otel/opentelemetry-collector-contrib@sha256:7f22d2a6748110ffb6a59bc0df448bccbf501cdb667d610ede4c61d3863d5849",
+        "tag": "0.163.2",
+        "usedComponents": [
+          "exporters/otlp_http go.opentelemetry.io/collector/exporter/otlphttpexporter v0.163.0",
+          "exporters/prometheus github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter v0.163.0",
+          "extensions/health_check github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.163.0",
+          "processors/filter github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.163.0",
+          "receivers/otlp go.opentelemetry.io/collector/receiver/otlpreceiver v0.163.0"
+        ],
+        "version": "otelcol-contrib version 0.163.2"
+      },
+      "runtime": {
+        "container": "read-only root, all capabilities dropped, no-new-privileges, 256 MiB memory, 1 CPU, 128 PIDs, ports published on 127.0.0.1 only, no Docker socket, not privileged",
+        "docker": "29.9.2",
+        "go": "go1.27.3",
+        "hostArch": "arm64",
+        "hostOs": "darwin"
+      },
+      "sdk": "go.opentelemetry.io/otel/sdk/metric v1.47.0 → otlpmetrichttp v1.47.0 → Collector → OTLP/HTTP protobuf sink → protojson v1.36.12 (UseEnumNumbers)"
+    },
+    "generatedAt": "2026-11-02T13:43:03Z"
+  },
+  "schema": 1,
+  "semantic": {
+    "drop-overflow": {
+      "exports": [
+        {
+          "phase": "before",
+          "points": [
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 7
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 100
+            }
+          ]
+        },
+        {
+          "phase": "after",
+          "points": [
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 8
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 1000
+            }
+          ]
+        },
+        {
+          "phase": "zero",
+          "points": [
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 8
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 1000
+            }
+          ]
+        },
+        {
+          "phase": "after-reexport",
+          "points": [
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 8
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 1000
+            }
+          ]
+        }
+      ],
+      "identity": {
+        "metric": "http.server.requests",
+        "monotonic": true,
+        "resource": "deployment.environment.name=s:collector-lab,service.instance.id=s:lab-instance-1,service.name=s:overflowlens-validation",
+        "scope": "overflowlens.validation 0.2.0",
+        "temporality": "CUMULATIVE",
+        "unit": "{request}"
+      },
+      "lostWindowOverflow": 99,
+      "onlyOverflowRemoved": true,
+      "prometheus": {
+        "after": {
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests_total",
+          "type": "counter",
+          "overflowLabel": "",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 8
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 1000
+            }
+          ],
+          "total": 1008,
+          "overflowTotal": 0,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        },
+        "afterReexport": {
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests_total",
+          "type": "counter",
+          "overflowLabel": "",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 8
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 1000
+            }
+          ],
+          "total": 1008,
+          "overflowTotal": 0,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        },
+        "before": {
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests_total",
+          "type": "counter",
+          "overflowLabel": "",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 7
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 100
+            }
+          ],
+          "total": 107,
+          "overflowTotal": 0,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        },
+        "negotiationProbe": {
+          "accept": "application/openmetrics-text;version=1.0.0;q=1.0,text/plain;version=0.0.4;q=0.5,*/*;q=0.1",
+          "classicContentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "samplesEqualClassic": true
+        },
+        "zero": {
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests_total",
+          "type": "counter",
+          "overflowLabel": "",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 8
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 1000
+            }
+          ],
+          "total": 1008,
+          "overflowTotal": 0,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        }
+      },
+      "reexportEqualsAfter": true,
+      "removedPoints": [
+        {
+          "attributes": "otel.metric.overflow=b:true",
+          "phase": "before",
+          "value": 5
+        },
+        {
+          "attributes": "otel.metric.overflow=b:true",
+          "phase": "after",
+          "value": 104
+        },
+        {
+          "attributes": "otel.metric.overflow=b:true",
+          "phase": "zero",
+          "value": 104
+        }
+      ],
+      "sdkWindow": {
+        "K": 901,
+        "E": 1,
+        "O": 99,
+        "T": 1000
+      },
+      "timestamps": {
+        "collectionTimesStrictlyIncrease": true,
+        "collectorPreservedSdkStartAndCollectionTimes": true,
+        "startUnchangedAcrossExports": true
+      },
+      "truthContained": false,
+      "window": {
+        "K": 901,
+        "E": 1,
+        "O": 0,
+        "T": 901
+      },
+      "zeroWindow": {
+        "K": 0,
+        "E": 0,
+        "O": 0,
+        "T": 0
+      }
+    },
+    "positive": {
+      "exports": [
+        {
+          "phase": "before",
+          "points": [
+            {
+              "attributes": "otel.metric.overflow=b:true",
+              "overflow": true,
+              "value": 5
+            },
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 7
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 100
+            }
+          ]
+        },
+        {
+          "phase": "after",
+          "points": [
+            {
+              "attributes": "otel.metric.overflow=b:true",
+              "overflow": true,
+              "value": 104
+            },
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 8
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 1000
+            }
+          ]
+        },
+        {
+          "phase": "zero",
+          "points": [
+            {
+              "attributes": "otel.metric.overflow=b:true",
+              "overflow": true,
+              "value": 104
+            },
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 8
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 1000
+            }
+          ]
+        },
+        {
+          "phase": "after-reexport",
+          "points": [
+            {
+              "attributes": "otel.metric.overflow=b:true",
+              "overflow": true,
+              "value": 104
+            },
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 8
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 1000
+            }
+          ]
+        }
+      ],
+      "identity": {
+        "metric": "http.server.requests",
+        "monotonic": true,
+        "resource": "deployment.environment.name=s:collector-lab,service.instance.id=s:lab-instance-1,service.name=s:overflowlens-validation",
+        "scope": "overflowlens.validation 0.2.0",
+        "temporality": "CUMULATIVE",
+        "unit": "{request}"
+      },
+      "prometheus": {
+        "after": {
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests_total",
+          "type": "counter",
+          "overflowLabel": "otel_metric_overflow",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_metric_overflow": "true",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0"
+              },
+              "value": 104
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 8
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 1000
+            }
+          ],
+          "total": 1112,
+          "overflowTotal": 104,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        },
+        "afterReexport": {
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests_total",
+          "type": "counter",
+          "overflowLabel": "otel_metric_overflow",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_metric_overflow": "true",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0"
+              },
+              "value": 104
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 8
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 1000
+            }
+          ],
+          "total": 1112,
+          "overflowTotal": 104,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        },
+        "before": {
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests_total",
+          "type": "counter",
+          "overflowLabel": "otel_metric_overflow",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_metric_overflow": "true",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0"
+              },
+              "value": 5
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 7
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 100
+            }
+          ],
+          "total": 112,
+          "overflowTotal": 5,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        },
+        "negotiationProbe": {
+          "accept": "application/openmetrics-text;version=1.0.0;q=1.0,text/plain;version=0.0.4;q=0.5,*/*;q=0.1",
+          "classicContentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "samplesEqualClassic": true
+        },
+        "zero": {
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests_total",
+          "type": "counter",
+          "overflowLabel": "otel_metric_overflow",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_metric_overflow": "true",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0"
+              },
+              "value": 104
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 8
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 1000
+            }
+          ],
+          "total": 1112,
+          "overflowTotal": 104,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        }
+      },
+      "reexportEqualsAfter": true,
+      "sdkWindow": {
+        "K": 901,
+        "E": 1,
+        "O": 99,
+        "T": 1000
+      },
+      "timestamps": {
+        "collectionTimesStrictlyIncrease": true,
+        "collectorPreservedSdkStartAndCollectionTimes": true,
+        "startUnchangedAcrossExports": true
+      },
+      "truthContained": true,
+      "window": {
+        "K": 901,
+        "E": 1,
+        "O": 99,
+        "T": 1000
+      },
+      "zeroWindow": {
+        "K": 0,
+        "E": 0,
+        "O": 0,
+        "T": 0
+      }
+    },
+    "positive-openmetrics": {
+      "exports": [
+        {
+          "phase": "before",
+          "points": [
+            {
+              "attributes": "otel.metric.overflow=b:true",
+              "overflow": true,
+              "value": 5
+            },
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 7
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 100
+            }
+          ]
+        },
+        {
+          "phase": "after",
+          "points": [
+            {
+              "attributes": "otel.metric.overflow=b:true",
+              "overflow": true,
+              "value": 104
+            },
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 8
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 1000
+            }
+          ]
+        },
+        {
+          "phase": "zero",
+          "points": [
+            {
+              "attributes": "otel.metric.overflow=b:true",
+              "overflow": true,
+              "value": 104
+            },
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 8
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 1000
+            }
+          ]
+        },
+        {
+          "phase": "after-reexport",
+          "points": [
+            {
+              "attributes": "otel.metric.overflow=b:true",
+              "overflow": true,
+              "value": 104
+            },
+            {
+              "attributes": "request.id=s:known-error,success=b:false",
+              "overflow": false,
+              "value": 8
+            },
+            {
+              "attributes": "request.id=s:known-success,success=b:true",
+              "overflow": false,
+              "value": 1000
+            }
+          ]
+        }
+      ],
+      "identity": {
+        "metric": "http.server.requests",
+        "monotonic": true,
+        "resource": "deployment.environment.name=s:collector-lab,service.instance.id=s:lab-instance-1,service.name=s:overflowlens-validation",
+        "scope": "overflowlens.validation 0.2.0",
+        "temporality": "CUMULATIVE",
+        "unit": "{request}"
+      },
+      "prometheus": {
+        "after": {
+          "contentType": "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests",
+          "type": "counter",
+          "overflowLabel": "otel_metric_overflow",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_metric_overflow": "true",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0"
+              },
+              "value": 104
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 8
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 1000
+            }
+          ],
+          "total": 1112,
+          "overflowTotal": 104,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        },
+        "afterReexport": {
+          "contentType": "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests",
+          "type": "counter",
+          "overflowLabel": "otel_metric_overflow",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_metric_overflow": "true",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0"
+              },
+              "value": 104
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 8
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 1000
+            }
+          ],
+          "total": 1112,
+          "overflowTotal": 104,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        },
+        "before": {
+          "contentType": "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests",
+          "type": "counter",
+          "overflowLabel": "otel_metric_overflow",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_metric_overflow": "true",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0"
+              },
+              "value": 5
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 7
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 100
+            }
+          ],
+          "total": 112,
+          "overflowTotal": 5,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        },
+        "negotiationProbe": {
+          "accept": "text/plain;version=0.0.4;q=1.0,*/*;q=0.1",
+          "classicContentType": "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
+          "contentType": "text/plain; version=0.0.4; charset=utf-8; escaping=underscores",
+          "samplesEqualClassic": true
+        },
+        "zero": {
+          "contentType": "application/openmetrics-text; version=1.0.0; charset=utf-8; escaping=underscores",
+          "family": "http_server_requests",
+          "type": "counter",
+          "overflowLabel": "otel_metric_overflow",
+          "outcomeLabel": "success",
+          "requestIdLabel": "request_id",
+          "resourceAndScopeLabels": [
+            "instance",
+            "job",
+            "otel_scope_name",
+            "otel_scope_schema_url",
+            "otel_scope_version"
+          ],
+          "samples": [
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_metric_overflow": "true",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0"
+              },
+              "value": 104
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-error",
+                "success": "false"
+              },
+              "value": 8
+            },
+            {
+              "labels": {
+                "instance": "lab-instance-1",
+                "job": "overflowlens-validation",
+                "otel_scope_name": "overflowlens.validation",
+                "otel_scope_schema_url": "",
+                "otel_scope_version": "0.2.0",
+                "request_id": "known-success",
+                "success": "true"
+              },
+              "value": 1000
+            }
+          ],
+          "total": 1112,
+          "overflowTotal": 104,
+          "excludedSampleNames": [
+            "target_info"
+          ]
+        }
+      },
+      "reexportEqualsAfter": true,
+      "sdkWindow": {
+        "K": 901,
+        "E": 1,
+        "O": 99,
+        "T": 1000
+      },
+      "timestamps": {
+        "collectionTimesStrictlyIncrease": true,
+        "collectorPreservedSdkStartAndCollectionTimes": true,
+        "startUnchangedAcrossExports": true
+      },
+      "truthContained": true,
+      "window": {
+        "K": 901,
+        "E": 1,
+        "O": 99,
+        "T": 1000
+      },
+      "zeroWindow": {
+        "K": 0,
+        "E": 0,
+        "O": 0,
+        "T": 0
+      }
+    }
+  }
+}

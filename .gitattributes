@@ -2,8 +2,10 @@
 
 # Preserve captured JSON bytes across platforms; hashes identify original bytes.
 fixtures/sdk/** -text -filter -ident
+fixtures/collector/** -text -filter -ident
 public/examples/** -text -filter -ident
 
+*.pb binary
 *.png binary
 *.jpg binary
 *.jpeg binary

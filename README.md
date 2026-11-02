@@ -1,4 +1,4 @@
-<p align="center"><img src="public/icon.svg" width="96" height="96" alt="OverflowLens: a lens over a range of possible error rates" /></p>
+<p align="center"><img src="public/icon.svg" width="96" height="96" alt="OverflowLens: a lens focused on an interval of possible error rates" /></p>
 
 # OverflowLens
 
@@ -85,6 +85,12 @@ Completeness, synchrony, one boolean outcome per request, genuine SDK overflow s
 
 New or disappearing series, unknown starts and reset-spanning windows are unsupported. Missing points are never zero-filled or intersected away. The application does not aggregate processes, recover lost outcomes, ingest live metrics, provide a general temporality converter or assess a full SLO. Read the [input contract](docs/input-contract.md) for the complete rules.
 
+## Data from an OpenTelemetry Collector
+
+OverflowLens reads a saved OTLP JSON file, wherever it came from. The [Collector validation](docs/collector-validation.md) shows one pipeline that preserves the contract: a cumulative SDK counter sent to OpenTelemetry Collector contrib 0.163.2 with an `otlp` receiver, an `otlp_http` exporter and **no processor**. Save the exported `ExportMetricsServiceRequest` before and after your window. Convert protobuf with an official ProtoJSON serializer with numeric enums; the lab shows how. Its counts, overflow point and timestamps matched the SDK's, and the window bounds contained the independently known error rate.
+
+This does not guarantee your pipeline. A filter that drops the overflow points produces a valid file with exact-looking bounds for the received counts only, and OverflowLens cannot detect that loss. The provenance confirmation is your statement that nothing changed counts or attribution after the SDK. Other processors, versions and exporters were not tested. Prometheus output is not an input format.
+
 ## Exact arithmetic and reports
 
 For ordinary requests `K`, known errors `E`, overflow requests `O`, and total `T = K + O`:
@@ -127,6 +133,7 @@ The source build writes application files into `dist/`. Serve that directory loc
 - [Input contract](docs/input-contract.md): representations, stream identity, diagnostics and report fields.
 - [Mathematics](docs/mathematics.md): attainable bounds and exact decisions.
 - [SDK validation](docs/validation.md): the pinned Go SDK workload, fixtures and reproduction commands.
+- [Collector validation](docs/collector-validation.md): usable data through a pinned Collector, and what that does not guarantee.
 - [Design and references](docs/research.md): OpenTelemetry semantics and implementation choices.
 - [Contributing](CONTRIBUTING.md): source layout, checks, formatting and release packaging.
 - [Changelog](CHANGELOG.md): released features and unreleased changes.

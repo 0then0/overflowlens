@@ -1,0 +1,32 @@
+# Positive lab pipeline: no processor. Cumulative OTLP passes through unchanged.
+# Delivery is synchronous (no queue, no retry), so an acknowledged SDK export has
+# reached the OTLP sink and the Prometheus exporter's accumulator.
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  otlp_http/sink:
+    endpoint: ${env:OVERFLOWLENS_SINK_ENDPOINT}
+    encoding: proto
+    compression: none
+    timeout: 10s
+    retry_on_failure:
+      enabled: false
+    sending_queue:
+      enabled: false
+  prometheus:
+    endpoint: 0.0.0.0:8889
+
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      exporters: [otlp_http/sink, prometheus]

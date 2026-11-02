@@ -66,8 +66,12 @@ Follow [Contributing](../CONTRIBUTING.md) to run formatting, unit tests, product
 
 A synthetic pair with 28,000 series exercises files near the 5 MiB limit. Threshold changes reuse prepared counts, preserve exact results and produce no browser long tasks during the checked interaction. The archive test uses the same packager as the release workflow and verifies launch instructions, checksum, assets and the Worker from the extracted archive.
 
+## Collector pipeline
+
+A separate, explicit lab sends the same workload through a pinned OpenTelemetry Collector and checks the output. See [Collector validation](collector-validation.md) for the pipeline, the preserved and violated assumptions, and the commands. Its Docker steps are not part of `npm run validate:sdk`, unit tests or CI.
+
 ## Validation scope
 
-Compatibility evidence covers the pinned Go SDK, one synchronous integer instrument and Chromium. Mobile layout is checked with a narrow viewport. These checks do not prove production delivery completeness, physical-device performance, cross-SDK behavior or a full SLO.
+Compatibility evidence covers the pinned Go SDK, one synchronous integer instrument and Chromium. Mobile layout is checked with a narrow viewport. These checks do not prove production delivery completeness, physical-device performance, cross-SDK behavior or a full SLO. The Collector lab adds one pinned Collector version and configuration; it does not generalize to other processors or deployments.
 
 Report and fixture hashes identify reproducible calculation inputs; they do not prove provenance. See [Design and references](research.md) for the underlying specifications and [Input contract](input-contract.md) for accepted data.
