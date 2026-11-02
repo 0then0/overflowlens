@@ -33,11 +33,11 @@ async function report(page: Page) {
 
 test('two real SDK imports, applicability, exact window, provenance, bounds and evidence export stay local', async ({
   page,
+  baseURL,
 }) => {
   const external: string[] = [];
   page.on('request', (r) => {
-    if (!r.url().startsWith('http://127.0.0.1:4173') && !r.url().startsWith('blob:'))
-      external.push(r.url());
+    if (new URL(r.url()).origin !== baseURL && !r.url().startsWith('blob:')) external.push(r.url());
   });
   await imports(page);
   await expect(page.getByRole('checkbox')).not.toBeChecked();

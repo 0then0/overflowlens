@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import cumulativeAfter from '../fixtures/sdk/cumulative-after.json?raw';
+import cumulativeBefore from '../fixtures/sdk/cumulative-before.json?raw';
+import { version } from '../package.json';
 import demo from '../public/examples/demo.json?raw';
 import { analyze, outcomeCandidates, type Settings } from './core/analyze';
 import { formatPercent, scalePercent } from './core/calculate';
@@ -325,7 +328,7 @@ export function App() {
         <a className="brand" href="./">
           <img src="./icon.svg" alt="" />
           <strong>OverflowLens</strong>
-          <span className="version">v0.2</span>
+          <span className="version">v{version}</span>
         </a>
         <span className="local-badge">
           <i /> Local analysis · No uploads
@@ -438,16 +441,45 @@ export function App() {
               <button
                 type="button"
                 className="demo-button"
-                disabled={busy || afterBusy || mode === 'cumulative'}
-                onClick={() => {
-                  const token = ++revision.current.before;
+                disabled={busy || afterBusy}
+                onClick={async () => {
+                  const beforeToken = ++revision.current.before;
+                  const afterToken = ++revision.current.after;
                   reset();
                   setBusy(true);
-                  void load(demo, 'demo.json · mathematical example', token);
+                  setAfterBusy(mode === 'cumulative');
+                  if (mode === 'cumulative') {
+                    await Promise.all([
+                      load(cumulativeBefore, 'cumulative-before.json · SDK example', beforeToken),
+                      load(
+                        cumulativeAfter,
+                        'cumulative-after.json · SDK example',
+                        afterToken,
+                        'after',
+                      ),
+                    ]);
+                  } else {
+                    await load(demo, 'demo.json · mathematical example', beforeToken);
+                  }
+                  if (
+                    revision.current.before === beforeToken &&
+                    revision.current.after === afterToken
+                  )
+                    setSettings((current) => ({ ...current, outcomeAttribute: 'success' }));
                 }}
               >
-                Load the 900 / 1 / 99 example <span>↗</span>
+                {mode === 'delta'
+                  ? 'Load the 900 / 1 / 99 example'
+                  : 'Load the cumulative before / after example'}{' '}
+                <span>↗</span>
               </button>
+              <p className="fine">
+                {mode === 'cumulative'
+                  ? 'Synthetic SDK example: 1,000 requests in the window, 0.1%–10% possible errors; the known true rate is 3.4%. Baseline requests are excluded.'
+                  : 'Synthetic example: 900 known successes, 1 known error and 99 requests with unknown outcomes.'}{' '}
+                Confirm the assumptions below to analyze it. Imported files and reports are
+                processed locally in your browser; the hosted app downloads its own assets.
+              </p>
               {importError && (
                 <div className="diagnostic" role="alert">
                   <strong>{labels[importError.status]}</strong>

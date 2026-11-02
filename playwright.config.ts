@@ -1,10 +1,14 @@
 import { defineConfig } from '@playwright/test';
+
+const port = process.env.OVERFLOWLENS_TEST_PORT ?? '4173';
+const baseURL = `http://127.0.0.1:${port}`;
+
 export default defineConfig({
   testDir: './tests/browser',
-  use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium' },
+  use: { baseURL, browserName: 'chromium' },
   webServer: {
-    command: 'npm run preview -- --port 4173',
-    url: 'http://127.0.0.1:4173',
-    reuseExistingServer: !process.env.CI,
+    command: `npm run preview -- --port ${port} --strictPort`,
+    url: baseURL,
+    reuseExistingServer: false,
   },
 });

@@ -8,7 +8,7 @@
 
 OverflowLens calculates **exact error-rate bounds after OpenTelemetry SDK cardinality overflow**. Import a saved request counter, choose a delta interval or a window between two cumulative snapshots, and compare the possible error rates with your limit.
 
-Files stay on your computer. The application runs in your browser, with no accounts, uploads, analytics, remote fonts or external application requests. The badges above are external README images; the application does not load them.
+Imported files, reports and entered values are processed locally in your browser. There are no accounts, uploads, analytics or remote fonts. A hosted copy downloads its own application assets; analysis and JSON export do not send your data to a server. The badges above are external README images; the application does not load them.
 
 ## Why bounds?
 
@@ -37,6 +37,10 @@ All 99 overflow requests could have succeeded, failed, or had any mixture of out
 
 ![Cumulative window analysis showing separate Before and After imports, selected collection timestamps, pair applicability and bounds for 1,000 requests](docs/screenshots/cumulative-window.png)
 
+## Open app
+
+[Open app](https://0then0.github.io/overflowlens/) **(deployment pending; not yet available)**. This browser URL is prepared for GitHub Pages; it is not a verified publication. Use the downloadable build below until deployment is confirmed. The [deployment guide](docs/deployment.md) records the source policy and remaining setup.
+
 ## Run a published build
 
 Download a static archive from [GitHub Releases](https://github.com/0then0/overflowlens/releases), extract it, and change into the extracted `overflowlens-<version>` directory. Check that release's notes for its supported modes; cumulative windows require v0.2 or later.
@@ -53,7 +57,7 @@ Use HTTPS for remote hosting. Opening `index.html` through `file://` is unsuppor
 
 ## Analyze your data
 
-1. Choose **Delta interval** or **Cumulative window**. Delta accepts one OTLP JSON file or the built-in example. Cumulative requires separate **Before** and **After** exports.
+1. Choose **Delta interval** or **Cumulative window**. Delta accepts one OTLP JSON file or the built-in example. Cumulative accepts separate **Before** and **After** exports, or its bundled before/after example. Both examples work immediately without Go, Docker, Node.js or your own data; confirm the displayed assumptions to see the result.
 2. Select one Resource/scope/metric stream and its collection boundaries. For cumulative mode, select matching streams and inspect the pair applicability status and exact `(before, after]` window.
 3. Enter the boolean measurement outcome key, such as `success`, and select which value means error.
 4. Confirm the provenance contract after checking that it applies to your data.

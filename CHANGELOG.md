@@ -2,6 +2,12 @@
 
 This file summarizes user-visible changes. Detailed compatibility and launch instructions are in the linked release notes. Unreleased changes are available on the default branch and are not included in existing release archives.
 
+## Unreleased
+
+- Prepare GitHub Pages distribution of v0.2.1 through an explicit, verified source commit, preserving downloadable archives and relative assets. Publication is pending.
+- Bundle the synthetic SDK cumulative before/after example, show the exact application version and clarify local data processing.
+- Exercise production assets and the Worker under `/overflowlens/`, including imports, report export, privacy, mobile and system themes.
+
 ## [0.2.1](docs/releases/v0.2.1.md)
 
 - Redesign the interface as a dark developer console with hairline borders, graphite surfaces and a single green action, and follow the system light or dark setting. Fonts are Red Hat when installed, otherwise Inter or system fonts; nothing loads remotely.

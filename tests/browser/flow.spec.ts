@@ -8,11 +8,13 @@ async function setup(page: import('@playwright/test').Page) {
   await page.getByLabel('Boolean outcome attribute').fill('success');
   await page.getByRole('checkbox').check();
 }
-test('complete local scenario, exact verdicts and explanatory export', async ({ page }) => {
+test('complete local scenario, exact verdicts and explanatory export', async ({
+  page,
+  baseURL,
+}) => {
   const external: string[] = [];
   page.on('request', (r) => {
-    if (!r.url().startsWith('http://127.0.0.1:4173') && !r.url().startsWith('blob:'))
-      external.push(r.url());
+    if (new URL(r.url()).origin !== baseURL && !r.url().startsWith('blob:')) external.push(r.url());
   });
   await setup(page);
   await expect(

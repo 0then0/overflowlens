@@ -45,7 +45,9 @@ npx playwright install chromium
 npm run test:browser
 ```
 
-Browser tests use the production build through a local preview server. They also package the build in a temporary directory and run the extracted archive, checking assets and the import Worker. The large-window regression checks threshold changes on a synthetic pair near the importer limit; it checks correctness and browser long tasks rather than elapsed network or process time.
+Browser tests use the production build through a local preview server. A separate strict server verifies `/overflowlens/` project-subpath hosting and local-data network behavior. See the [Pages deployment guide](docs/deployment.md) for the manual source policy and remote setup. They also package the build in a temporary directory and run the extracted archive, checking assets and the import Worker. The large-window regression checks threshold changes on a synthetic pair near the importer limit; it checks correctness and browser long tasks rather than elapsed network or process time.
+
+The browser runner owns its preview server and fails if its port is occupied, rather than silently testing an unrelated application. To use another port, run `OVERFLOWLENS_TEST_PORT=4183 npm run test:browser`.
 
 For Go changes or SDK validation:
 
