@@ -75,7 +75,7 @@ npm run lint
 npm run check:fix
 ```
 
-Fixtures, bundled examples and `package-lock.json` are excluded from Biome to preserve recorded bytes. Markdown and workflow YAML are maintained separately. Format Go with `gofmt`.
+Fixtures, bundled examples and `package-lock.json` are excluded from Biome to preserve recorded bytes. Markdown and YAML are explicitly excluded from Biome and maintained separately, including after formatter upgrades. Format Go with `gofmt`.
 
 `.editorconfig` defines editor defaults, including Go tabs and Python's four-space indentation. `.gitattributes` normalizes ordinary text to LF and marks binary assets appropriately. Captured SDK fixtures and bundled JSON examples are excluded from Git line-ending conversion and editor whitespace cleanup so their original bytes remain intact. Do not normalize or reformat them as part of unrelated work. Keep lockfiles, fixtures and screenshots tracked; `.gitignore` excludes dependencies, builds, local configuration and verification artifacts.
 
