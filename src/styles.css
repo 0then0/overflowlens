@@ -907,3 +907,7 @@ footer {
     filter: brightness(1.08);
   }
 }
+
+.selection {
+  margin: 0 0 16px;
+}

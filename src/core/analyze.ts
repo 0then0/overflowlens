@@ -12,6 +12,13 @@ export function analyze(stream: Stream, settings: Settings): Analysis {
   try {
     if (stream.diagnostics.length)
       return { status: stream.diagnostics[0].status, diagnostic: stream.diagnostics[0] };
+    if (stream.identity.type !== 'sum')
+      fail(
+        'UNSUPPORTED_TYPE',
+        'Only monotonic integer Sum request counters are supported in this mode.',
+        undefined,
+        'UNSUPPORTED_INPUT',
+      );
     if (stream.identity.temporality !== 'DELTA')
       fail(
         'UNSUPPORTED_TEMPORALITY',
@@ -97,19 +104,8 @@ export function readPoint(p: ObjectValue, outcomeAttribute: string, path: string
   if (p.asInt == null) fail('MISSING_COUNT', 'The point has no asInt count.', path);
   const n = integer(p.asInt, `${path}.asInt`);
   if (n < 0n) fail('NEGATIVE_COUNT', 'A request counter must be nonnegative.', path);
-  let overflow = false;
-  if (Object.hasOwn(attrs, OVERFLOW)) {
-    if (attrs[OVERFLOW] !== true)
-      fail('INVALID_OVERFLOW_MARKER', 'The overflow marker must be boolValue: true.', path);
-    if (Object.keys(attrs).length !== 1)
-      fail(
-        'AMBIGUOUS_OVERFLOW',
-        'The overflow marker has additional measurement attributes. This may be Cardinality Guardian tagging, not SDK attribution loss.',
-        path,
-        'UNSUPPORTED_INPUT',
-      );
-    overflow = true;
-  } else {
+  const overflow = overflowShape(attrs, path);
+  if (!overflow) {
     if (!Object.hasOwn(attrs, outcomeAttribute))
       fail(
         'MISSING_OUTCOME',
@@ -124,4 +120,19 @@ export function readPoint(p: ObjectValue, outcomeAttribute: string, path: string
       );
   }
   return { attributes: attrs, count: n.toString(), overflow };
+}
+
+// The strict SDK overflow shape: exactly one measurement attribute, boolValue true.
+export function overflowShape(attrs: Record<string, unknown>, path: string): boolean {
+  if (!Object.hasOwn(attrs, OVERFLOW)) return false;
+  if (attrs[OVERFLOW] !== true)
+    fail('INVALID_OVERFLOW_MARKER', 'The overflow marker must be boolValue: true.', path);
+  if (Object.keys(attrs).length !== 1)
+    fail(
+      'AMBIGUOUS_OVERFLOW',
+      'The overflow marker has additional measurement attributes. This may be Cardinality Guardian tagging, not SDK attribution loss.',
+      path,
+      'UNSUPPORTED_INPUT',
+    );
+  return true;
 }

@@ -6,7 +6,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/0then0/overflowlens/ci.yml?branch=main&label=checks)](https://github.com/0then0/overflowlens/actions/workflows/ci.yml)
 [![Validated SDK](https://img.shields.io/badge/validated%20SDK-Go%201.47.0-426449)](docs/validation.md)
 
-OverflowLens calculates **exact error-rate bounds after OpenTelemetry SDK cardinality overflow**. Import a saved request counter, choose a delta interval or a window between two cumulative snapshots, and compare the possible error rates with your limit.
+OverflowLens calculates **exact error-rate bounds after OpenTelemetry SDK cardinality overflow**. Import a saved request counter, choose a delta interval or a window between two cumulative snapshots, and compare the possible error rates with your limit. A separate mode bounds the **HTTP 5xx share** of a delta `http.server.request.duration` histogram.
 
 Imported files, reports and entered values are processed locally in your browser. There are no accounts, uploads, analytics or remote fonts. A hosted copy downloads its own application assets; analysis and JSON export do not send your data to a server. The badges above are external README images; the application does not load them.
 
@@ -57,14 +57,14 @@ Use HTTPS for remote hosting. Opening `index.html` through `file://` is unsuppor
 
 ## Analyze your data
 
-1. Choose **Delta interval** or **Cumulative window**. Delta accepts one OTLP JSON file or the built-in example. Cumulative accepts separate **Before** and **After** exports, or its bundled before/after example. Both examples work immediately without Go, Docker, Node.js or your own data; confirm the displayed assumptions to see the result.
+1. Choose **Delta interval**, **Cumulative window** or **HTTP 5xx histogram (delta)**. Delta and HTTP accept one OTLP JSON file or a built-in example. Cumulative accepts separate **Before** and **After** exports, or its bundled before/after example. The examples work immediately without Go, Docker, Node.js or your own data; confirm the displayed assumptions to see the result.
 2. Select one Resource/scope/metric stream and its collection boundaries. For cumulative mode, select matching streams and inspect the pair applicability status and exact `(before, after]` window.
-3. Enter the boolean measurement outcome key, such as `success`, and select which value means error.
+3. Enter the boolean measurement outcome key, such as `success`, and select which value means error. The HTTP mode has no outcome field: its criterion is fixed to HTTP 5xx.
 4. Confirm the provenance contract after checking that it applies to your data.
 5. Enter the maximum allowed error percentage. Equality meets the limit.
 6. Export the explanatory JSON to retain the selected inputs, assumptions, exact counts, fractions and conclusion.
 
-Changing either file, stream, boundary, outcome, error value or mode clears the previous verdict and provenance confirmation. Changing only the threshold uses the same validated counts. The outcome key can be entered manually, including for an overflow-only interval.
+Changing either file, stream, interval or boundary, outcome, error value or mode clears the previous verdict and provenance confirmation. Changing only the threshold uses the same validated counts. The outcome key can be entered manually, including for an overflow-only interval.
 
 ## Interpret the result
 
@@ -80,7 +80,7 @@ A refusal is different from mathematical uncertainty. Malformed related data blo
 
 Use uncompressed UTF-8 OTLP JSON `ExportMetricsServiceRequest` files, with lowerCamelCase field names and numeric enum values. Files are limited to **5 MiB each**, and a cumulative pair to **10 MiB combined**.
 
-Both modes analyze a synchronous request counter represented as a monotonic integer `Sum`. Every ordinary point must retain the selected boolean measurement outcome. SDK overflow must contain exactly one measurement attribute: `otel.metric.overflow=true`.
+The delta and cumulative modes analyze a synchronous request counter represented as a monotonic integer `Sum`. Every ordinary point must retain the selected boolean measurement outcome. SDK overflow must contain exactly one measurement attribute: `otel.metric.overflow=true`.
 
 - **Delta:** one complete collection interval, with common start and end timestamps.
 - **Cumulative:** two complete exports of the same stream, one collection timestamp per selected stream per file, ordered boundaries, identical measurement identity sets, known unchanged starts for corresponding series, and no decreasing counts. Different series may have different start times.
@@ -88,6 +88,12 @@ Both modes analyze a synchronous request counter represented as a monotonic inte
 Completeness, synchrony, one boolean outcome per request, genuine SDK overflow semantics and unchanged downstream counts/attribution require user confirmation. Cumulative mode also requires one continuous source history with stable ordinary attribution. Metadata and source hashes do not prove these conditions.
 
 New or disappearing series, unknown starts and reset-spanning windows are unsupported. Missing points are never zero-filled or intersected away. The application does not aggregate processes, recover lost outcomes, ingest live metrics, provide a general temporality converter or assess a full SLO. Read the [input contract](docs/input-contract.md) for the complete rules.
+
+### HTTP 5xx histogram
+
+This mode accepts only the `http.server.request.duration` metric as an explicit-bucket `Histogram` with delta temporality. The `count` of every datapoint is the number of completed requests. An ordinary point is classified by its integer `http.response.status_code`: 500–599 is **HTTP 5xx**, and other statuses from 100 to 499 are other responses. A missing, invalid or contradictory status refuses the calculation. The overflow point keeps the same strict single-attribute rule and is added to `O`. Bucket counts are validated when present but are not analyzed; cumulative and exponential histograms, latency and routes are out of scope.
+
+You must confirm that each observation is one completed request, ordinary points keep the correct status, and downstream processing changed neither counts nor attribution. A matching metric name never confirms this.
 
 ## Data from an OpenTelemetry Collector
 
@@ -112,7 +118,7 @@ Cumulative mode first subtracts each matched point's before count from its after
 
 Counts, fractions and comparisons use `BigInt`. Rounding affects display only. See [mathematics](docs/mathematics.md) for the proof and endpoint witnesses.
 
-Delta reports use schema v1. Cumulative reports use schema v2, preserving both original-file SHA-256 hashes, selected identities, exact boundaries, settings, assumptions, applicability checks, matched counts/increments, fractions and witnesses. Refusal reports retain diagnostics and selected inputs without inventing rates. A hash identifies bytes, not authenticity.
+Delta reports use schema v1, and HTTP 5xx histogram reports use schema v3 with the input metric, classification criterion, source hash, interval, confirmed conditions and exact results. Cumulative reports use schema v2, preserving both original-file SHA-256 hashes, selected identities, exact boundaries, settings, assumptions, applicability checks, matched counts/increments, fractions and witnesses. Refusal reports retain diagnostics and selected inputs without inventing rates. A hash identifies bytes, not authenticity.
 
 ## Build from source
 

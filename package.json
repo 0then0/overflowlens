@@ -13,6 +13,7 @@
     "package:release": "python3 scripts/package-release.py",
     "test:browser": "playwright test",
     "validate:sdk": "cd validation && go run . && cd .. && vitest run tests/sdk.test.ts",
+    "validate:http": "cd validation && go run ./http && cd .. && vitest run tests/http-sdk.test.ts",
     "validate:collector:prepare": "cd validation && go run ./collector prepare",
     "validate:collector": "cd validation && go run ./collector run",
     "format": "biome format . --write",

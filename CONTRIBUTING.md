@@ -59,6 +59,8 @@ go vet ./...
 
 The Collector lab needs Docker and is separate from every other check. `npm run validate:collector:prepare` pulls the digest-pinned image and is the only step that downloads it; `npm run validate:collector` runs the lab against disposable loopback resources and compares its semantic content with `fixtures/collector/`. It never overwrites evidence unless `--out ... --replace` is passed. See [Collector validation](docs/collector-validation.md).
 
+`validate:http` serves a deterministic workload through real otelhttp instrumentation, rewrites `fixtures/http/` and checks the exports (see [SDK validation](docs/validation.md#http-5xx-histogram-validation)).
+
 `validate:sdk` rewrites SDK fixtures. Run it separately from tests that read those files. Review those changes as captured exports, preserving their bytes. See [SDK validation](docs/validation.md) for expected results and the distinction between real exports and synthetic controls.
 
 ## Dependency updates

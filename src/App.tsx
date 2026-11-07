@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import httpExample from '../fixtures/http/http-overflow.json?raw';
 import cumulativeAfter from '../fixtures/sdk/cumulative-after.json?raw';
 import cumulativeBefore from '../fixtures/sdk/cumulative-before.json?raw';
 import { version } from '../package.json';
@@ -6,20 +7,26 @@ import demo from '../public/examples/demo.json?raw';
 import { analyze, outcomeCandidates, type Settings } from './core/analyze';
 import { formatPercent, scalePercent } from './core/calculate';
 import { type CumulativeSettings, calculateCumulative, pairCumulative } from './core/cumulative';
+import { analyzeHttp } from './core/http';
 import { attributes } from './core/parse';
-import { makeCumulativeReport, makeReport, type Source } from './core/report';
+import { makeCumulativeReport, makeHttpReport, makeReport, type Source } from './core/report';
 import {
   type Analysis,
   CONTRACT,
   CUMULATIVE_CONTRACT,
   type Diagnostic,
   diagnostic,
+  HTTP_CONTRACT,
+  HTTP_CRITERION,
+  HTTP_METRIC,
+  HTTP_STATUS_ATTRIBUTE,
   type ImportData,
   InputError,
   MAX_FILE_BYTES,
   MAX_PAIR_BYTES,
   OVERFLOW,
   type Rational,
+  type Stream,
 } from './core/types';
 
 const labels = {
@@ -38,6 +45,17 @@ const defaults: Settings = {
   contractConfirmed: false,
 };
 type Side = 'before' | 'after';
+type Mode = 'delta' | 'cumulative' | 'http';
+function supports(mode: Mode, s: Stream) {
+  const { identity } = s;
+  if (s.diagnostics.length) return false;
+  return mode === 'http'
+    ? identity.type === 'histogram' &&
+        identity.name === HTTP_METRIC &&
+        identity.temporality === 'DELTA'
+    : identity.type === 'sum' &&
+        identity.temporality === (mode === 'delta' ? 'DELTA' : 'CUMULATIVE');
+}
 function fraction(r: Rational) {
   return `${r.numerator} / ${r.denominator}`;
 }
@@ -50,19 +68,21 @@ function Range({
   upper,
   threshold,
   uncertain,
+  subject,
 }: {
   lower: Rational;
   upper: Rational;
   threshold: Rational;
   uncertain: boolean;
+  subject: string;
 }) {
   return (
     <figure
       className="range-visual"
-      aria-label={`Possible error rate ${formatPercent(lower)} to ${formatPercent(upper)}; threshold ${formatPercent(threshold)}`}
+      aria-label={`Possible ${subject} ${formatPercent(lower)} to ${formatPercent(upper)}; threshold ${formatPercent(threshold)}`}
     >
       <figcaption className="range-legend">
-        <span>Possible error rate</span>
+        <span>Possible {subject}</span>
         <span>│ Maximum allowed: {formatPercent(threshold)}</span>
       </figcaption>
       <div className="track">
@@ -95,7 +115,7 @@ function Range({
   );
 }
 export function App() {
-  const [mode, setMode] = useState<'delta' | 'cumulative'>('delta');
+  const [mode, setMode] = useState<Mode>('delta');
   const [afterData, setAfterData] = useState<ImportData | null>(null);
   const [afterSource, setAfterSource] = useState<Source | null>(null);
   const [afterError, setAfterError] = useState<Diagnostic | null>(null);
@@ -136,6 +156,7 @@ export function App() {
   );
   const candidates = useMemo(() => {
     if (!stream) return [];
+    if (mode === 'http') return [];
     if (mode === 'delta') return outcomeCandidates(stream, settings.intervalId);
     const keys = new Set<string>();
     for (const p of stream.snapshots.find((s) => s.id === beforeSnapshotId)?.points ?? []) {
@@ -166,6 +187,7 @@ export function App() {
   );
   const result: Analysis | null = useMemo(() => {
     if (!stream || busy || afterBusy) return null;
+    if (mode === 'http') return analyzeHttp(stream, settings);
     if (mode === 'delta') return analyze(stream, settings);
     return pairing ? calculateCumulative(pairing, cumulativeSettings) : null;
   }, [stream, pairing, settings, cumulativeSettings, mode, busy, afterBusy]);
@@ -236,12 +258,7 @@ export function App() {
         bytes: bytes.length,
         sha256: Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join(''),
       });
-      const first =
-        parsed.streams.find(
-          (s) =>
-            !s.diagnostics.length &&
-            s.identity.temporality === (mode === 'delta' ? 'DELTA' : 'CUMULATIVE'),
-        ) ?? parsed.streams[0];
+      const first = parsed.streams.find((s) => supports(mode, s)) ?? parsed.streams[0];
       if (first) {
         (side === 'before' ? setStreamId : setAfterStreamId)(first.id);
         (side === 'before' ? setBeforeSnapshotId : setAfterSnapshotId)(
@@ -314,7 +331,18 @@ export function App() {
             before: source,
             after: afterSource,
           })
-        : makeReport(stream, settings, result, source);
+        : mode === 'http'
+          ? makeHttpReport(
+              stream,
+              {
+                intervalId: settings.intervalId,
+                threshold: settings.threshold,
+                contractConfirmed: settings.contractConfirmed,
+              },
+              result,
+              source,
+            )
+          : makeReport(stream, settings, result, source);
     const url = URL.createObjectURL(new Blob([report], { type: 'application/json' }));
     const link = document.createElement('a');
     link.href = url;
@@ -369,11 +397,12 @@ export function App() {
                     reset();
                     setBusy(false);
                     setAfterBusy(false);
-                    setMode(e.target.value as 'delta' | 'cumulative');
+                    setMode(e.target.value as Mode);
                   }}
                 >
                   <option value="delta">Delta interval</option>
                   <option value="cumulative">Cumulative window</option>
+                  <option value="http">HTTP 5xx histogram (delta)</option>
                 </select>
               </label>
               {mode === 'cumulative' && (
@@ -448,7 +477,9 @@ export function App() {
                   reset();
                   setBusy(true);
                   setAfterBusy(mode === 'cumulative');
-                  if (mode === 'cumulative') {
+                  if (mode === 'http') {
+                    await load(httpExample, 'http-overflow.json · SDK example', beforeToken);
+                  } else if (mode === 'cumulative') {
                     await Promise.all([
                       load(cumulativeBefore, 'cumulative-before.json · SDK example', beforeToken),
                       load(
@@ -465,18 +496,24 @@ export function App() {
                     revision.current.before === beforeToken &&
                     revision.current.after === afterToken
                   )
-                    setSettings((current) => ({ ...current, outcomeAttribute: 'success' }));
+                    setSettings((current) =>
+                      mode === 'http' ? current : { ...current, outcomeAttribute: 'success' },
+                    );
                 }}
               >
                 {mode === 'delta'
                   ? 'Load the 900 / 1 / 99 example'
-                  : 'Load the cumulative before / after example'}{' '}
+                  : mode === 'http'
+                    ? 'Load the HTTP 5xx SDK example'
+                    : 'Load the cumulative before / after example'}{' '}
                 <span>↗</span>
               </button>
               <p className="fine">
                 {mode === 'cumulative'
                   ? 'Synthetic SDK example: 1,000 requests in the window, 0.1%–10% possible errors; the known true rate is 3.4%. Baseline requests are excluded.'
-                  : 'Synthetic example: 900 known successes, 1 known error and 99 requests with unknown outcomes.'}{' '}
+                  : mode === 'http'
+                    ? 'Real OpenTelemetry Go otelhttp export with a small SDK cardinality limit: known requests, known HTTP 5xx and an overflow count with unknown status codes.'
+                    : 'Synthetic example: 900 known successes, 1 known error and 99 requests with unknown outcomes.'}{' '}
                 Confirm the assumptions below to analyze it. Imported files and reports are
                 processed locally in your browser; the hosted app downloads its own assets.
               </p>
@@ -522,10 +559,7 @@ export function App() {
                     <option key={s.id} value={s.id}>
                       {i + 1}. {s.identity.name} · {s.identity.scope.name || '(unnamed scope)'} ·{' '}
                       {s.identity.type} · {s.identity.temporality}
-                      {s.diagnostics.length ||
-                      s.identity.temporality !== (mode === 'delta' ? 'DELTA' : 'CUMULATIVE')
-                        ? ' · unavailable'
-                        : ''}
+                      {!supports(mode, s) ? ' · unavailable' : ''}
                     </option>
                   ))}
                 </select>
@@ -547,7 +581,11 @@ export function App() {
                     <dd>
                       {stream.identity.type} · {stream.identity.unit || '(no unit)'} ·{' '}
                       {stream.identity.temporality} ·{' '}
-                      {stream.identity.monotonic ? 'monotonic' : 'non-monotonic'}
+                      {stream.identity.type === 'histogram'
+                        ? 'explicit buckets'
+                        : stream.identity.monotonic
+                          ? 'monotonic'
+                          : 'non-monotonic'}
                     </dd>
                     <dt>Schema URLs</dt>
                     <dd>
@@ -557,7 +595,7 @@ export function App() {
                   </dl>
                 </details>
               )}
-              {mode === 'delta' ? (
+              {mode !== 'cumulative' ? (
                 <>
                   <label>
                     Collection interval
@@ -578,6 +616,14 @@ export function App() {
                     <p className="fine">
                       Exact boundaries (Unix nanoseconds):{' '}
                       <code>{settings.intervalId.replace(':', ' → ')}</code>
+                    </p>
+                  )}
+                  {mode === 'http' && (
+                    <p className="fine" data-testid="criterion">
+                      Criterion: <strong>{HTTP_CRITERION}</strong>,{' '}
+                      <code>{HTTP_STATUS_ATTRIBUTE}</code> from 500 to 599. Every other valid status
+                      from 100 to 499 is a non-5xx response. A missing, invalid or contradictory
+                      status refuses the calculation.
                     </p>
                   )}
                 </>
@@ -601,9 +647,7 @@ export function App() {
                           {i + 1}. {s.identity.name} · {s.identity.scope.name} ·{' '}
                           {s.identity.temporality}
                           {s.id === stream?.id ? ' · matching identity' : ' · different identity'}
-                          {s.diagnostics.length || s.identity.temporality !== 'CUMULATIVE'
-                            ? ' · unavailable'
-                            : ''}
+                          {!supports('cumulative', s) ? ' · unavailable' : ''}
                         </option>
                       ))}
                     </select>
@@ -679,67 +723,90 @@ export function App() {
                     setSettings((s) => ({ ...s, contractConfirmed: e.target.checked }))
                   }
                 />
-                <span>{mode === 'cumulative' ? CUMULATIVE_CONTRACT : CONTRACT}</span>
+                <span>
+                  {mode === 'cumulative'
+                    ? CUMULATIVE_CONTRACT
+                    : mode === 'http'
+                      ? HTTP_CONTRACT
+                      : CONTRACT}
+                </span>
               </label>
               <p className="fine">
-                Choose the outcome before confirming. This is your assumption. A JSON file cannot
-                prove completeness, SDK origin or synchronous instrumentation.
+                {mode === 'http'
+                  ? 'This is your assumption. A matching metric name never confirms it: the file cannot prove request semantics, status attribution, completeness or SDK origin.'
+                  : 'Choose the outcome before confirming. This is your assumption. A JSON file cannot prove completeness, SDK origin or synchronous instrumentation.'}
               </p>
-              <label>
-                Boolean outcome attribute
-                <input
-                  list="outcomes"
-                  placeholder="e.g. success"
-                  disabled={!stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)}
-                  value={settings.outcomeAttribute}
-                  onChange={(e) =>
-                    setSettings((s) => ({
-                      ...s,
-                      outcomeAttribute: e.target.value,
-                      errorValue: false,
-                      threshold: '1',
-                      contractConfirmed: false,
-                    }))
-                  }
-                />
-                <datalist id="outcomes">
-                  {candidates.map((k) => (
-                    <option key={k} value={k} />
-                  ))}
-                </datalist>
-              </label>
-              <div className="field-row">
+              {mode === 'http' ? (
                 <label>
-                  Error value
-                  <select
-                    disabled={
-                      !stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)
-                    }
-                    value={String(settings.errorValue)}
-                    onChange={(e) =>
-                      setSettings((s) => ({
-                        ...s,
-                        errorValue: e.target.value === 'true',
-                        contractConfirmed: false,
-                      }))
-                    }
-                  >
-                    <option value="false">false</option>
-                    <option value="true">true</option>
-                  </select>
-                </label>
-                <label>
-                  Maximum error rate (%)
+                  Maximum HTTP 5xx rate (%)
                   <input
                     inputMode="decimal"
-                    disabled={
-                      !stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)
-                    }
+                    disabled={!stream || busy || afterBusy}
                     value={settings.threshold}
                     onChange={(e) => setSettings((s) => ({ ...s, threshold: e.target.value }))}
                   />
                 </label>
-              </div>
+              ) : (
+                <>
+                  <label>
+                    Boolean outcome attribute
+                    <input
+                      list="outcomes"
+                      placeholder="e.g. success"
+                      disabled={
+                        !stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)
+                      }
+                      value={settings.outcomeAttribute}
+                      onChange={(e) =>
+                        setSettings((s) => ({
+                          ...s,
+                          outcomeAttribute: e.target.value,
+                          errorValue: false,
+                          threshold: '1',
+                          contractConfirmed: false,
+                        }))
+                      }
+                    />
+                    <datalist id="outcomes">
+                      {candidates.map((k) => (
+                        <option key={k} value={k} />
+                      ))}
+                    </datalist>
+                  </label>
+                  <div className="field-row">
+                    <label>
+                      Error value
+                      <select
+                        disabled={
+                          !stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)
+                        }
+                        value={String(settings.errorValue)}
+                        onChange={(e) =>
+                          setSettings((s) => ({
+                            ...s,
+                            errorValue: e.target.value === 'true',
+                            contractConfirmed: false,
+                          }))
+                        }
+                      >
+                        <option value="false">false</option>
+                        <option value="true">true</option>
+                      </select>
+                    </label>
+                    <label>
+                      Maximum error rate (%)
+                      <input
+                        inputMode="decimal"
+                        disabled={
+                          !stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)
+                        }
+                        value={settings.threshold}
+                        onChange={(e) => setSettings((s) => ({ ...s, threshold: e.target.value }))}
+                      />
+                    </label>
+                  </div>
+                </>
+              )}
               <p className="fine">Equality is within the limit. Use a dot for decimals.</p>
             </section>
           </div>
@@ -751,7 +818,11 @@ export function App() {
               <div className="result-heading">
                 <span className="eyebrow">WHAT THE DATA SUPPORTS</span>
                 <span className="mini-label">
-                  {mode === 'delta' ? 'INTERVAL ANALYSIS' : 'CUMULATIVE WINDOW'}
+                  {mode === 'delta'
+                    ? 'INTERVAL ANALYSIS'
+                    : mode === 'http'
+                      ? 'HTTP 5XX HISTOGRAM'
+                      : 'CUMULATIVE WINDOW'}
                 </span>
               </div>
               {!result ? (
@@ -759,8 +830,9 @@ export function App() {
                   <div className="empty-symbol">[ ? ]</div>
                   <h2>Your count tells part of the story.</h2>
                   <p>
-                    Import an export or load the example, then select the outcome and confirm its
-                    provenance to see the rest.
+                    {mode === 'http'
+                      ? 'Import an export or load the example, then select the interval and confirm the conditions to see the HTTP 5xx bounds.'
+                      : 'Import an export or load the example, then select the outcome and confirm its provenance to see the rest.'}
                   </p>
                 </div>
               ) : valid ? (
@@ -785,15 +857,20 @@ export function App() {
                         {formatPercent(valid.lower)} <span>…</span> {formatPercent(valid.upper)}
                       </div>
                       <p className="range-caption">
-                        {valid.O > 0n
-                          ? 'Possible true error rate · nonzero uncertainty'
-                          : 'Exact error rate · no overflow observations'}
+                        {mode === 'http'
+                          ? valid.O > 0n
+                            ? 'Possible true HTTP 5xx share · nonzero uncertainty'
+                            : 'Exact HTTP 5xx share · no overflow observations'
+                          : valid.O > 0n
+                            ? 'Possible true error rate · nonzero uncertainty'
+                            : 'Exact error rate · no overflow observations'}
                       </p>
                       <Range
                         lower={valid.lower}
                         upper={valid.upper}
                         threshold={valid.threshold}
                         uncertain={valid.O > 0n}
+                        subject={mode === 'http' ? 'HTTP 5xx rate' : 'error rate'}
                       />
                       <div className="explanation">
                         <strong>
@@ -807,8 +884,12 @@ export function App() {
                           {valid.status === 'INDETERMINATE'
                             ? 'Some allocations of the overflow count meet the threshold, and others exceed it. These data cannot settle the question.'
                             : valid.status === 'WITHIN_LIMIT'
-                              ? 'Even if every overflow request was an error, the error rate would remain at or below the maximum.'
-                              : 'Known errors alone exceed the maximum, even if every overflow request was successful.'}
+                              ? mode === 'http'
+                                ? 'Even if every overflow request was an HTTP 5xx response, the share would remain at or below the maximum.'
+                                : 'Even if every overflow request was an error, the error rate would remain at or below the maximum.'
+                              : mode === 'http'
+                                ? 'Known HTTP 5xx responses alone exceed the maximum, even if no overflow request was a 5xx response.'
+                                : 'Known errors alone exceed the maximum, even if every overflow request was successful.'}
                         </p>
                       </div>
                     </>
@@ -834,11 +915,34 @@ export function App() {
             </section>
             <section className="panel counts-panel">
               <h2>Every observation accounted for</h2>
+              {mode === 'http' && stream && (
+                <dl className="selection" data-testid="selection">
+                  <dt>Criterion</dt>
+                  <dd>{HTTP_CRITERION}</dd>
+                  <dt>Stream</dt>
+                  <dd>
+                    {stream.identity.name} · {stream.identity.scope.name || '(unnamed scope)'} ·{' '}
+                    {stream.identity.temporality}
+                  </dd>
+                  <dt>Interval</dt>
+                  <dd>
+                    {settings.intervalId ? (
+                      <code>{settings.intervalId.replace(':', ' → ')} ns</code>
+                    ) : (
+                      '—'
+                    )}
+                  </dd>
+                </dl>
+              )}
               <div className="counts">
                 {(['K', 'E', 'O', 'T'] as const).map((key, i) => (
                   <div key={key}>
                     <span>
-                      {['Known requests', 'Known errors', 'SDK overflow', 'Total requests'][i]}{' '}
+                      {
+                        (mode === 'http'
+                          ? ['Known requests', 'Known HTTP 5xx', 'SDK overflow', 'Total requests']
+                          : ['Known requests', 'Known errors', 'SDK overflow', 'Total requests'])[i]
+                      }{' '}
                       <code>{key}</code>
                     </span>
                     <strong>{valid ? valid[key].toString() : '—'}</strong>
@@ -846,8 +950,8 @@ export function App() {
                 ))}
               </div>
               <p className="fine">
-                Known successes = K − E{valid ? ` = ${valid.K - valid.E}` : ''}. The denominator
-                includes overflow.
+                {mode === 'http' ? 'Known non-5xx responses' : 'Known successes'} = K − E
+                {valid ? ` = ${valid.K - valid.E}` : ''}. The denominator includes overflow.
               </p>
             </section>
             <section className="panel method-panel">
@@ -857,13 +961,21 @@ export function App() {
                   <span>LOWER BOUND</span>
                   <code>E / T</code>
                   {valid?.lower && <p>{fraction(valid.lower)}</p>}
-                  <p>All overflow requests succeed.</p>
+                  <p>
+                    {mode === 'http'
+                      ? 'No overflow request is an HTTP 5xx response.'
+                      : 'All overflow requests succeed.'}
+                  </p>
                 </div>
                 <div>
                   <span>UPPER BOUND</span>
                   <code>(E + O) / T</code>
                   {valid?.upper && <p>{fraction(valid.upper)}</p>}
-                  <p>All overflow requests fail.</p>
+                  <p>
+                    {mode === 'http'
+                      ? 'Every overflow request is an HTTP 5xx response.'
+                      : 'All overflow requests fail.'}
+                  </p>
                 </div>
               </div>
               <p>
@@ -878,10 +990,19 @@ export function App() {
               )}
               <details>
                 <summary>When this model applies</summary>
-                <p>
-                  A synchronous monotonic integer Sum, one complete delta interval or a compatible
-                  cumulative pair, and a boolean outcome on every ordinary measurement point.
-                </p>
+                {mode === 'http' ? (
+                  <p>
+                    One complete delta interval of an explicit-bucket <code>{HTTP_METRIC}</code>{' '}
+                    Histogram. Each point <code>count</code> is the number of completed requests,
+                    and every ordinary point has an integer <code>{HTTP_STATUS_ATTRIBUTE}</code>.
+                    Cumulative and exponential histograms, latency and routes are not analyzed.
+                  </p>
+                ) : (
+                  <p>
+                    A synchronous monotonic integer Sum, one complete delta interval or a compatible
+                    cumulative pair, and a boolean outcome on every ordinary measurement point.
+                  </p>
+                )}
                 <p>
                   SDK overflow must have exactly one measurement attribute:{' '}
                   <code>otel.metric.overflow = true</code>. Resource and scope attributes may

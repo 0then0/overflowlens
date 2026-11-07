@@ -69,6 +69,25 @@ export function integer(value: unknown, path: string, unsigned = false, bits = 6
     );
   return n;
 }
+// Finite JSON-number doubles only (number token or quoted numeric string).
+export function double(value: unknown, path: string): number {
+  const token =
+    typeof value === 'string'
+      ? value
+      : isParserNumber(value)
+        ? value.value
+        : typeof value === 'number'
+          ? String(value)
+          : '';
+  const n = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(token) ? Number(token) : NaN;
+  if (!Number.isFinite(n))
+    fail(
+      'INVALID_DOUBLE',
+      'Expected a finite JSON number; NaN and Infinity are not supported.',
+      path,
+    );
+  return n;
+}
 export function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
   if (value && typeof value === 'object')

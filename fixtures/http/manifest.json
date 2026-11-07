@@ -1,0 +1,879 @@
+{
+  "go": "go1.27.3",
+  "modules": {
+    "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp": "v0.72.0",
+    "go.opentelemetry.io/otel": "v1.47.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp": "v1.47.0",
+    "go.opentelemetry.io/otel/sdk": "v1.47.0",
+    "go.opentelemetry.io/otel/sdk/metric": "v1.47.0",
+    "go.opentelemetry.io/proto/otlp": "v1.11.1",
+    "google.golang.org/protobuf": "v1.36.12"
+  },
+  "semconv": "go.opentelemetry.io/otel/semconv/v1.43.0 (httpconv, used by otelhttp v0.72.0)",
+  "metric": "http.server.request.duration",
+  "temporality": "delta for every instrument kind (sdk.WithTemporalitySelector)",
+  "aggregation": "default aggregation for Histogram instruments: explicit bucket histogram using the instrumentation's advisory boundaries; min and max recorded",
+  "explicitBounds": [
+    0.005,
+    0.01,
+    0.025,
+    0.05,
+    0.075,
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    1,
+    2.5,
+    5,
+    7.5,
+    10
+  ],
+  "views": "none",
+  "workload": [
+    {
+      "client": "alpha",
+      "method": "GET",
+      "status": 200,
+      "count": 400
+    },
+    {
+      "client": "alpha",
+      "method": "GET",
+      "status": 404,
+      "count": 30
+    },
+    {
+      "client": "alpha",
+      "method": "GET",
+      "status": 500,
+      "count": 12
+    },
+    {
+      "client": "alpha",
+      "method": "GET",
+      "status": 503,
+      "count": 8
+    },
+    {
+      "client": "beta",
+      "method": "POST",
+      "status": 201,
+      "count": 50
+    },
+    {
+      "client": "beta",
+      "method": "POST",
+      "status": 502,
+      "count": 4
+    },
+    {
+      "client": "beta",
+      "method": "GET",
+      "status": 200,
+      "count": 60
+    },
+    {
+      "client": "burst-000",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-001",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-002",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-003",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-004",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-005",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-006",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-007",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-008",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-009",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-010",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-011",
+      "method": "GET",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "client": "burst-012",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-013",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-014",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-015",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-016",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-017",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-018",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-019",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-020",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-021",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-022",
+      "method": "GET",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "client": "burst-023",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-024",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-025",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-026",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-027",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-028",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-029",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-030",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-031",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-032",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-033",
+      "method": "GET",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "client": "burst-034",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-035",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-036",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-037",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-038",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-039",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-040",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-041",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-042",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-043",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-044",
+      "method": "GET",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "client": "burst-045",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-046",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-047",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-048",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-049",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-050",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-051",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-052",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-053",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-054",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-055",
+      "method": "GET",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "client": "burst-056",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-057",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-058",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-059",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-060",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-061",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-062",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-063",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-064",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-065",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-066",
+      "method": "GET",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "client": "burst-067",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-068",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-069",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-070",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-071",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-072",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-073",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-074",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-075",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-076",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-077",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-078",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-079",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-080",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-081",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-082",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-083",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-084",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-085",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-086",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-087",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-088",
+      "method": "GET",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "client": "burst-089",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-090",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-091",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-092",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-093",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-094",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-095",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-096",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-097",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-098",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-099",
+      "method": "GET",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "client": "burst-100",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-101",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-102",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-103",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-104",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-105",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-106",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-107",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-108",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-109",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-110",
+      "method": "GET",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "client": "burst-111",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-112",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    },
+    {
+      "client": "burst-113",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-114",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-115",
+      "method": "GET",
+      "status": 404,
+      "count": 1
+    },
+    {
+      "client": "burst-116",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-117",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-118",
+      "method": "GET",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "client": "burst-119",
+      "method": "GET",
+      "status": 500,
+      "count": 1
+    }
+  ],
+  "serializer": "OTLP HTTP exporter → OTLP protobuf → protojson (UseEnumNumbers)",
+  "cases": [
+    {
+      "name": "http-overflow",
+      "file": "http-overflow.json",
+      "cardinalityLimit": 8,
+      "K": "564",
+      "E": "24",
+      "O": "120",
+      "T": "684",
+      "ordinaryPoints": 7,
+      "overflowPoints": 1,
+      "truthTotal": "684",
+      "truthServerErrors": "51",
+      "observedStatuses": [
+        {
+          "status": 200,
+          "count": 535
+        },
+        {
+          "status": 201,
+          "count": 50
+        },
+        {
+          "status": 404,
+          "count": 48
+        },
+        {
+          "status": 500,
+          "count": 30
+        },
+        {
+          "status": 502,
+          "count": 4
+        },
+        {
+          "status": 503,
+          "count": 17
+        }
+      ]
+    },
+    {
+      "name": "http-no-overflow",
+      "file": "http-no-overflow.json",
+      "cardinalityLimit": 2000,
+      "K": "684",
+      "E": "51",
+      "O": "0",
+      "T": "684",
+      "ordinaryPoints": 127,
+      "overflowPoints": 0,
+      "truthTotal": "684",
+      "truthServerErrors": "51",
+      "observedStatuses": [
+        {
+          "status": 200,
+          "count": 535
+        },
+        {
+          "status": 201,
+          "count": 50
+        },
+        {
+          "status": 404,
+          "count": 48
+        },
+        {
+          "status": 500,
+          "count": 30
+        },
+        {
+          "status": 502,
+          "count": 4
+        },
+        {
+          "status": 503,
+          "count": 17
+        }
+      ]
+    }
+  ],
+  "instrumentation": "net/http server wrapped by otelhttp.NewHandler"
+}

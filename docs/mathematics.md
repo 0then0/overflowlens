@@ -41,6 +41,10 @@ The [synchronous cumulative SDK contract](https://opentelemetry.io/docs/specs/ot
 
 Both endpoint allocations are therefore attainable while keeping the baseline fixed. This requires the confirmed continuous source history and unchanged aggregation/attribution, not merely matching metadata. Exemplars cannot enumerate all overflow outcomes.
 
+## HTTP 5xx histogram
+
+For a delta `http.server.request.duration` histogram the same model applies with different definitions. K is the sum of `count` over ordinary points, each classified by its integer HTTP status, E is the sum over ordinary points with status 500–599, O is the `count` of the SDK overflow point, and T = K + O. The unknown number of overflow requests with a 5xx status is an integer from 0 to O, so the bounds are `E / T` and `(E + O) / T`, and the threshold decisions, `NO_DATA` rule and BigInt arithmetic are unchanged. Histogram `count` conserves observations: the SDK places every measurement in exactly one aggregator, ordinary or overflow. Bucket counts, sums and latency do not enter the calculation, and overflow cannot be split by status or route.
+
 ## Why outcomes cannot be recovered
 
 The synthetic [demo export](../public/examples/demo.json) has ordinary counts `success=true:900`, `success=false:1`, and overflow 99. Hold the Resource, scope, unit, timestamps and emitted attributes fixed.

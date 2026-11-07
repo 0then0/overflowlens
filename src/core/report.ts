@@ -1,7 +1,17 @@
 import type { Settings } from './analyze';
 import { type CumulativeSettings, pairCumulative } from './cumulative';
+import type { HttpSettings } from './http';
 import { canonical } from './parse';
-import { type Analysis, CONTRACT, CUMULATIVE_CONTRACT, type Stream } from './types';
+import {
+  type Analysis,
+  CONTRACT,
+  CUMULATIVE_CONTRACT,
+  HTTP_CONTRACT,
+  HTTP_CRITERION,
+  HTTP_METRIC,
+  HTTP_STATUS_ATTRIBUTE,
+  type Stream,
+} from './types';
 export type Source = { name: string; sha256: string; bytes: number };
 export function makeReport(stream: Stream, settings: Settings, result: Analysis, source: Source) {
   const interval = stream.intervals.find((i) => i.id === settings.intervalId);
@@ -127,6 +137,80 @@ export function makeCumulativeReport(
       }),
     ),
     null,
+    2,
+  );
+}
+
+export function makeHttpReport(
+  stream: Stream,
+  settings: HttpSettings,
+  result: Analysis,
+  source: Source,
+) {
+  const interval = stream.intervals.find((i) => i.id === settings.intervalId);
+  return JSON.stringify(
+    {
+      reportVersion: '3',
+      application: { name: 'OverflowLens', version: '0.2.1' },
+      mode: 'http-5xx-histogram',
+      source,
+      identity: stream.identity,
+      inputMetric: {
+        name: stream.identity.name,
+        type: 'Histogram',
+        buckets: 'explicit',
+        temporality: stream.identity.temporality,
+        unit: stream.identity.unit,
+        expectedName: HTTP_METRIC,
+        countMeaning: 'count of each datapoint is the number of completed HTTP requests',
+      },
+      classification: {
+        criterion: HTTP_CRITERION,
+        attribute: HTTP_STATUS_ATTRIBUTE,
+        errorStatusCodes: '500-599',
+        otherStatusCodes: '100-499',
+        ordinaryPoints: 'integer status code required; missing, invalid or contradictory refuses',
+        overflowPoints: 'exactly one attribute, otel.metric.overflow = true; counted separately',
+      },
+      interval: interval ? { startTimeUnixNano: interval.start, timeUnixNano: interval.end } : null,
+      settings,
+      assumptions: {
+        contract: HTTP_CONTRACT,
+        userConfirmed: settings.contractConfirmed,
+        conditions: [
+          'Each histogram observation corresponds to one completed HTTP request.',
+          'Ordinary points retain the correct http.response.status_code.',
+          'Downstream processing did not change counts or attribution.',
+        ],
+        nameMatchProvesConditions: false,
+        structurallyProven: false,
+      },
+      model: {
+        K: 'sum of count over ordinary points',
+        E: 'sum of count over ordinary points with status code 500-599',
+        O: 'sum of count over the SDK overflow point',
+        T: 'K + O',
+        lower: 'E / T',
+        upper: '(E + O) / T',
+        within: 'upper <= threshold',
+        exceeds: 'lower > threshold',
+        equalityAllowed: true,
+      },
+      result,
+      witnesses:
+        'lower' in result && result.T > 0n
+          ? {
+              lower: { overflowServerErrors: '0', overflowOtherResponses: result.O.toString() },
+              upper: { overflowServerErrors: result.O.toString(), overflowOtherResponses: '0' },
+            }
+          : null,
+      limitations: [
+        'One imported delta interval, not a full SLO assessment.',
+        'The file cannot prove completeness, request semantics, status attribution or pre-transformation SDK provenance.',
+        'Latency, routes and bucket contents are not analyzed. Bounds describe possible allocations, not a confidence interval.',
+      ],
+    },
+    (_key, value: unknown) => (typeof value === 'bigint' ? value.toString() : value),
     2,
   );
 }

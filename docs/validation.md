@@ -54,6 +54,19 @@ Each cumulative provider uses `sdk.NewManualReader()` with no temporality overri
 
 All eight cumulative JSON files come from real official exporter payloads. TypeScript tests independently verify serialized increments, baseline exclusion, count conservation, truth containment, View results, zero windows and restart refusal.
 
+## HTTP 5xx histogram validation
+
+`npm run validate:http` runs `validation/http`, which serves a deterministic workload through a real `net/http` server wrapped by **otelhttp v0.72.0** (`otelhttp.NewHandler`). The instrumentation emits the stable `http.server.request.duration` histogram (semantic conventions package `semconv/v1.43.0`, advisory buckets 0.005 … 10 s) beside the request and response body size histograms. The harness records the exact module versions in `fixtures/http/manifest.json`: Go SDK `sdk/metric` v1.47.0, otelhttp v0.72.0, OTLP HTTP exporter v1.47.0, OTLP protobuf v1.11.1 and the protobuf runtime v1.36.12.
+
+Configuration: delta temporality for every instrument kind, the default Histogram aggregation (explicit buckets from the advisory boundaries, min and max recorded) and no Views. A baseline collection precedes the workload, and requests run sequentially against a loopback server. The server is closed before the final collection so every handler has recorded its metrics. No sleeps or periodic timers are used. The official OTLP exporter sends protobuf to a disposable receiver, and official ProtoJSON writes the JSON with numeric enums. The harness does not build OTLP JSON by hand.
+
+The workload has 684 requests: seven fixed attribute sets (clients `alpha` and `beta`, with statuses 200, 201, 404, 500, 502 and 503) followed by 120 requests from unique `test.client` values that add a new attribute set each. The status of each request is chosen by the harness, and the instrumentation records what it serves. Ground truth is independent of the metric: a client tally of completed responses, cross-checked against a server-side tally taken inside the handler. It contains 51 responses with status 500–599.
+
+- `http-overflow.json`: SDK cardinality limit 8. Seven ordinary points and one overflow point give `K=564, E=24, O=120, T=684`, bounds 24/684 … 144/684, and the true 51/684 inside them.
+- `http-no-overflow.json`: limit 2,000. The same workload yields 127 ordinary points, `O=0`, `E=51`, and one exact rate 51/684.
+
+Both files contain three streams, so the other histograms test that the name restriction refuses a metric of identical shape. The harness fails if conservation, truth containment or the overflow expectation fails; `tests/http-sdk.test.ts` repeats them against the saved files and the TypeScript core. Port numbers and timestamps change on every run.
+
 ## Synthetic controls
 
 Malformed controls alter copies of valid exports to test individual decreases, missing counterparts, stream mismatches and inconsistent collection boundaries. They are test inputs, not SDK-produced fixtures.
@@ -62,7 +75,7 @@ Other synthetic controls cover large integer precision, per-series starts, attri
 
 ## Browser and packaging checks
 
-Follow [Contributing](../CONTRIBUTING.md) to run formatting, unit tests, production build and Chromium acceptance. Browser cases cover both modes, provenance resets, concurrent and replaced Worker imports, refusal reports, source hashes including UTF-8 BOM, exact thresholds and mobile layout.
+Follow [Contributing](../CONTRIBUTING.md) to run formatting, unit tests, production build and Chromium acceptance. Browser cases cover all three modes, provenance resets, concurrent and replaced Worker imports, refusal reports, source hashes including UTF-8 BOM, exact thresholds and mobile layout.
 
 A synthetic pair with 28,000 series exercises files near the 5 MiB limit. Threshold changes reuse prepared counts, preserve exact results and produce no browser long tasks during the checked interaction. The archive test uses the same packager as the release workflow and verifies launch instructions, checksum, assets and the Worker from the extracted archive.
 
@@ -72,6 +85,6 @@ A separate, explicit lab sends the same workload through a pinned OpenTelemetry 
 
 ## Validation scope
 
-Compatibility evidence covers the pinned Go SDK, one synchronous integer instrument and Chromium. Mobile layout is checked with a narrow viewport. These checks do not prove production delivery completeness, physical-device performance, cross-SDK behavior or a full SLO. The Collector lab adds one pinned Collector version and configuration; it does not generalize to other processors or deployments.
+Compatibility evidence covers the pinned Go SDK, one synchronous integer instrument, one otelhttp server histogram workload and Chromium. Mobile layout is checked with a narrow viewport. These checks do not prove production delivery completeness, physical-device performance, cross-SDK behavior or a full SLO. The Collector lab adds one pinned Collector version and configuration; it does not generalize to other processors or deployments.
 
 Report and fixture hashes identify reproducible calculation inputs; they do not prove provenance. See [Design and references](research.md) for the underlying specifications and [Input contract](input-contract.md) for accepted data.

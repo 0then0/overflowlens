@@ -1,3 +1,4 @@
+import { readHistogramPoint } from './histogram';
 import { array, attributes, canonical, integer, materializeNumbers, object, string } from './parse';
 import {
   type Diagnostic,
@@ -61,7 +62,9 @@ export function normalize(raw: unknown): ImportData {
               const type = present.length === 1 ? present[0] : 'unknown';
               const data = type === 'unknown' ? {} : object(m[type], `${mp}.${type}`);
               const temporality =
-                type === 'sum' ? enumTemporality(data.aggregationTemporality, mp) : 'N/A';
+                type === 'sum' || type === 'histogram'
+                  ? enumTemporality(data.aggregationTemporality, mp)
+                  : 'N/A';
               const identity: Identity = {
                 resource: resourceAttrs,
                 resourceSchemaUrl: string(rm.schemaUrl, rp),
@@ -71,7 +74,7 @@ export function normalize(raw: unknown): ImportData {
                 type,
                 unit: string(m.unit, `${mp}.unit`),
                 temporality,
-                monotonic: data.isMonotonic === true,
+                monotonic: type === 'histogram' ? false : data.isMonotonic === true,
               };
               if (!identity.name)
                 fail('MISSING_METRIC_NAME', 'A metric needs a nonempty name.', mp);
@@ -90,10 +93,10 @@ export function normalize(raw: unknown): ImportData {
               try {
                 if (present.length > 1)
                   fail('MULTIPLE_METRIC_TYPES', 'Metric has multiple data types.', mp);
-                if (type !== 'sum')
+                if (type !== 'sum' && type !== 'histogram')
                   fail(
                     'UNSUPPORTED_TYPE',
-                    'Only monotonic integer Sum request counters are supported.',
+                    'Only monotonic integer Sum request counters and delta HTTP duration Histograms are supported.',
                     mp,
                     'UNSUPPORTED_INPUT',
                   );
@@ -104,19 +107,28 @@ export function normalize(raw: unknown): ImportData {
                     mp,
                     'UNSUPPORTED_INPUT',
                   );
-                if (data.isMonotonic != null && typeof data.isMonotonic !== 'boolean')
-                  fail('INVALID_MONOTONICITY', 'isMonotonic must be boolean.', mp);
-                if (!identity.monotonic)
-                  fail('NON_MONOTONIC_SUM', 'The Sum must be monotonic.', mp, 'UNSUPPORTED_INPUT');
-                const points = array(data.dataPoints, `${mp}.sum.dataPoints`);
+                if (type === 'sum') {
+                  if (data.isMonotonic != null && typeof data.isMonotonic !== 'boolean')
+                    fail('INVALID_MONOTONICITY', 'isMonotonic must be boolean.', mp);
+                  if (!identity.monotonic)
+                    fail(
+                      'NON_MONOTONIC_SUM',
+                      'The Sum must be monotonic.',
+                      mp,
+                      'UNSUPPORTED_INPUT',
+                    );
+                }
+                const points = array(data.dataPoints, `${mp}.${type}.dataPoints`);
                 if (points.length === 0)
                   fail(
                     'MISSING_INTERVAL',
                     'There are no timestamped points to identify a complete interval. A timestamped zero counter is supported.',
                     mp,
                   );
-                for (const [pi, pointRaw] of points.entries()) {
-                  const pp = `${mp}.sum.dataPoints[${pi}]`,
+                // Only delta histograms are analyzed; others are refused by temporality.
+                const selected = type === 'histogram' && temporality !== 'DELTA' ? [] : points;
+                for (const [pi, pointRaw] of selected.entries()) {
+                  const pp = `${mp}.${type}.dataPoints[${pi}]`,
                     point = object(pointRaw, pp);
                   if (point.startTimeUnixNano == null || point.timeUnixNano == null)
                     fail('MISSING_TIMESTAMP', 'Both interval timestamps are required.', pp);
@@ -124,18 +136,21 @@ export function normalize(raw: unknown): ImportData {
                     end = integer(point.timeUnixNano, `${pp}.timeUnixNano`, true);
                   if (start <= 0n || end <= start)
                     fail('INVALID_INTERVAL', 'Require 0 < startTimeUnixNano < timeUnixNano.', pp);
-                  if (point.asDouble != null)
-                    fail(
-                      'DOUBLE_COUNTER',
-                      'asDouble is not supported. A request counter must use asInt.',
-                      pp,
-                      'UNSUPPORTED_INPUT',
-                    );
-                  if (point.asInt == null)
-                    fail('MISSING_COUNT', 'The point has no asInt count.', pp);
-                  if (integer(point.asInt, `${pp}.asInt`) < 0n)
-                    fail('NEGATIVE_COUNT', 'A request counter must be nonnegative.', pp);
-                  if (point.flags != null) integer(point.flags, `${pp}.flags`, true, 32);
+                  if (type === 'histogram') readHistogramPoint(point, pp);
+                  else {
+                    if (point.asDouble != null)
+                      fail(
+                        'DOUBLE_COUNTER',
+                        'asDouble is not supported. A request counter must use asInt.',
+                        pp,
+                        'UNSUPPORTED_INPUT',
+                      );
+                    if (point.asInt == null)
+                      fail('MISSING_COUNT', 'The point has no asInt count.', pp);
+                    if (integer(point.asInt, `${pp}.asInt`) < 0n)
+                      fail('NEGATIVE_COUNT', 'A request counter must be nonnegative.', pp);
+                    if (point.flags != null) integer(point.flags, `${pp}.flags`, true, 32);
+                  }
                   if (temporality === 'CUMULATIVE') {
                     let snapshot = stream.snapshots[0];
                     if (snapshot && snapshot.end !== String(end))

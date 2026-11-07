@@ -4,7 +4,7 @@ This reference defines the saved OTLP data that OverflowLens can analyze. Start 
 
 ## Files and representation
 
-Import uncompressed UTF-8 JSON `ExportMetricsServiceRequest` files. Delta mode uses one file; cumulative mode uses two separate Before and After exports. Each file is limited to **5 MiB**, and a pair to **10 MiB combined**. Size checks occur before reading.
+Import uncompressed UTF-8 JSON `ExportMetricsServiceRequest` files. Delta and HTTP 5xx histogram modes use one file; cumulative mode uses two separate Before and After exports. Each file is limited to **5 MiB**, and a pair to **10 MiB combined**. Size checks occur before reading.
 
 Use OTLP lowerCamelCase field names, such as `resourceMetrics`, `scopeMetrics`, `dataPoints`, `asInt`, `startTimeUnixNano` and `timeUnixNano`. Enum values must be numeric. Integer fields accept decimal strings or JSON numeric integer tokens, preserving all digits. Fractional and exponent forms of integer fields are unsupported.
 
@@ -22,7 +22,7 @@ Conflicting definitions, duplicate measurement identities and malformed potentia
 
 ## Counter and outcome
 
-Both modes require a synchronous request counter represented as a monotonic integer `Sum`:
+The delta and cumulative modes require a synchronous request counter represented as a monotonic integer `Sum`:
 
 - Delta: `aggregationTemporality: 1`.
 - Cumulative: `aggregationTemporality: 2`.
@@ -59,6 +59,26 @@ A changed start or decreasing point refuses the entire window, even if the total
 Subtract each matched point exactly, then sum ordinary increments K, ordinary error increments E, and overflow increment O. Baseline observations are excluded. The same bounds and threshold rules apply to these increments; snapshot percentages and bounds are never subtracted.
 
 Structural applicability is checked before provenance confirmation. Pairing and aggregation are reused while only the threshold or confirmation changes. File, stream, boundary, outcome key or error-value changes invalidate that preparation.
+
+## HTTP 5xx histogram
+
+The third mode analyzes one complete delta interval of the stable HTTP server metric `http.server.request.duration` as an explicit-bucket `Histogram` (`histogram` in OTLP JSON) with `aggregationTemporality: 1`. Other metrics, even with an identical shape, `exponentialHistogram`, `Sum` and cumulative histograms are unsupported. A cumulative histogram is refused by temporality without reading its points. Unit is recorded but not required.
+
+Each datapoint `count` is the number of requests. It is an unsigned int64 (`fixed64`) given as a decimal string or an integer token. Following proto3 JSON, an omitted `count` is zero, and values above `Number.MAX_SAFE_INTEGER` keep every digit. Datapoints need unsigned int64 timestamps with `0 < startTimeUnixNano < timeUnixNano`, as for Sum intervals, and measurement attribute sets must be unique within an interval.
+
+Histogram points are validated against the OTLP `HistogramDataPoint` rules, for every delta point of the stream:
+
+- `flags` must be zero; missing-observation and unknown flags are unsupported.
+- `bucketCounts` are unsigned int64 values and `explicitBounds` are finite, strictly increasing doubles. If `bucketCounts` is empty, `explicitBounds` must be empty; otherwise `bucketCounts` has exactly one more element and sums to `count`. Buckets are optional.
+- `sum`, `min` and `max` are finite doubles when present. `sum` must be zero when `count` is zero, and `min` cannot exceed `max`. Exemplars must be an array when present and are not used.
+
+One invalid point anywhere in the selected stream blocks the calculation. Other streams stay usable.
+
+An **ordinary** point needs an integer `http.response.status_code` from 100 to 599. 500–599 counts as HTTP 5xx; 100–499 counts as another response. A missing code, a string, boolean or double code, an out-of-range code, or a three-digit `error.type` that differs from the code refuses the calculation (`MISSING_STATUS_CODE`, `INVALID_STATUS_CODE`, `CONTRADICTORY_STATUS`). A non-string `error.type` is `INVALID_ERROR_TYPE`. Requests that ended without a response therefore cannot be classified and also refuse. Other attributes are ignored.
+
+An **overflow** point follows exactly the rule in [SDK overflow](#sdk-overflow-and-provenance): one attribute, `otel.metric.overflow = true`. Its `count` is `O`.
+
+The confirmation states that each histogram observation is one completed HTTP request, ordinary points retain the correct status, and downstream processing changed neither counts nor attribution, in addition to the complete-export and genuine-overflow conditions. The metric name alone never establishes this. The bounds `E/T` and `(E+O)/T` and the threshold rules are those in [mathematics](mathematics.md), with `E` the 5xx count. Reports use schema v3 (see below).
 
 ## Attribute values
 
@@ -100,6 +120,8 @@ These are user assumptions. Matching metadata and source hashes cannot prove com
 Refusals contain a diagnostic code, explanation and path when available. They are distinct from mathematical uncertainty. A structurally applicable pair can still be refused for unconfirmed provenance or an invalid threshold. See [mathematics](mathematics.md) for exact decisions and endpoint witnesses.
 
 ## Reports and state
+
+HTTP 5xx schema v3 adds `mode: http-5xx-histogram`, `inputMetric` (name, type, buckets, temporality, unit), `classification` (criterion, attribute, status ranges), the source name, size and SHA-256, exact boundaries, `assumptions.conditions` with the user confirmation, and exact decimal-string counts and fractions per point. A refusal keeps these without invented totals.
 
 Delta schema v1 preserves `source`, `identity`, `interval`, `settings`, `assumptions`, `model`, `result`, `witnesses` and `limitations`. It includes source name, original-byte size/SHA-256, exact boundaries, decimal-string counts and fractions, point counts and attainable endpoint witnesses.
 

@@ -60,7 +60,16 @@ export type Calculation = Counts & {
 };
 export type Analysis =
   | { status: 'INVALID_INPUT' | 'UNSUPPORTED_INPUT'; diagnostic: Diagnostic }
-  | (Calculation & { points: { attributes: Attributes; count: string; overflow: boolean }[] });
+  | (Calculation & {
+      points: {
+        attributes: Attributes;
+        count: string;
+        overflow: boolean;
+        // HTTP 5xx histogram mode only.
+        statusCode?: string;
+        responseClass?: 'server_error' | 'other';
+      }[];
+    });
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
 export const MAX_PAIR_BYTES = 2 * MAX_FILE_BYTES;
 export const OVERFLOW = 'otel.metric.overflow';
@@ -68,3 +77,8 @@ export const CONTRACT =
   'This is a complete export of the selected interval from a synchronous SDK request counter, before transformations that change values or measurement attributes. The counter counts requests, and every request has a boolean outcome.';
 export const CUMULATIVE_CONTRACT =
   'Both snapshots are complete SDK exports of the selected synchronous request counter from one continuous source history, with no resets or changes to counts or attribution by downstream transformations. Every request has one boolean outcome. The selected overflow marker has genuine SDK overflow semantics, with stable ordinary attribution across collections.';
+export const HTTP_METRIC = 'http.server.request.duration';
+export const HTTP_STATUS_ATTRIBUTE = 'http.response.status_code';
+export const HTTP_CRITERION = 'HTTP 5xx';
+export const HTTP_CONTRACT =
+  'This is a complete delta export of the selected interval from an SDK http.server.request.duration explicit-bucket Histogram, before transformations that change values or measurement attributes. Every histogram observation is one completed HTTP request, ordinary points retain the correct http.response.status_code, and downstream processing changed neither counts nor attribution. The selected overflow marker has genuine SDK overflow semantics.';
