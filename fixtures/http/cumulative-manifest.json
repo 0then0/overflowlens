@@ -1,0 +1,1132 @@
+{
+  "go": "go1.27.3",
+  "commands": [
+    "npm run validate:http-cumulative",
+    "cd validation \u0026\u0026 go run ./http cumulative",
+    "vitest run tests/http-cumulative-sdk.test.ts"
+  ],
+  "modules": {
+    "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp": "v0.72.0",
+    "go.opentelemetry.io/otel": "v1.47.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp": "v1.47.0",
+    "go.opentelemetry.io/otel/sdk": "v1.47.0",
+    "go.opentelemetry.io/otel/sdk/metric": "v1.47.0",
+    "go.opentelemetry.io/proto/otlp": "v1.11.1",
+    "google.golang.org/protobuf": "v1.36.12"
+  },
+  "semconv": "go.opentelemetry.io/otel/semconv/v1.43.0 (httpconv, used by otelhttp v0.72.0)",
+  "metric": "http.server.request.duration",
+  "temporality": "SDK default: sdk.NewManualReader() without a temporality selector, so every instrument is cumulative",
+  "aggregation": "default aggregation for Histogram instruments: explicit bucket histogram using the instrumentation's advisory boundaries; min and max recorded",
+  "views": "none",
+  "cardinalityLimit": 8,
+  "explicitBounds": [
+    0.005,
+    0.01,
+    0.025,
+    0.05,
+    0.075,
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    1,
+    2.5,
+    5,
+    7.5,
+    10
+  ],
+  "serializer": "OTLP HTTP exporter → OTLP protobuf → protojson (UseEnumNumbers)",
+  "instrumentation": "net/http server wrapped by otelhttp.NewHandler; one loopback server for every SDK incarnation",
+  "baseline": {
+    "plan": [
+      {
+        "client": "alpha",
+        "method": "GET",
+        "status": 200,
+        "count": 120
+      },
+      {
+        "client": "alpha",
+        "method": "GET",
+        "status": 404,
+        "count": 10
+      },
+      {
+        "client": "alpha",
+        "method": "GET",
+        "status": 500,
+        "count": 6
+      },
+      {
+        "client": "alpha",
+        "method": "GET",
+        "status": 503,
+        "count": 3
+      },
+      {
+        "client": "beta",
+        "method": "POST",
+        "status": 201,
+        "count": 15
+      },
+      {
+        "client": "beta",
+        "method": "POST",
+        "status": 502,
+        "count": 2
+      },
+      {
+        "client": "beta",
+        "method": "GET",
+        "status": 200,
+        "count": 20
+      },
+      {
+        "client": "base-000",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "base-001",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-002",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-003",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-004",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-005",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "base-006",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-007",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "base-008",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-009",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-010",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "base-011",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      },
+      {
+        "client": "base-012",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-013",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-014",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "base-015",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "base-016",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-017",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-018",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-019",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-020",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "base-021",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "base-022",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      },
+      {
+        "client": "base-023",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-024",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-025",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "base-026",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-027",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-028",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "base-029",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-030",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "base-031",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-032",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-033",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      },
+      {
+        "client": "base-034",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-035",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "base-036",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-037",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-038",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "base-039",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      }
+    ],
+    "total": 216,
+    "serverErrors": 20,
+    "observedStatuses": [
+      {
+        "status": 200,
+        "count": 165
+      },
+      {
+        "status": 201,
+        "count": 15
+      },
+      {
+        "status": 404,
+        "count": 16
+      },
+      {
+        "status": 500,
+        "count": 12
+      },
+      {
+        "status": 502,
+        "count": 2
+      },
+      {
+        "status": 503,
+        "count": 6
+      }
+    ]
+  },
+  "window": {
+    "plan": [
+      {
+        "client": "alpha",
+        "method": "GET",
+        "status": 200,
+        "count": 300
+      },
+      {
+        "client": "alpha",
+        "method": "GET",
+        "status": 404,
+        "count": 25
+      },
+      {
+        "client": "alpha",
+        "method": "GET",
+        "status": 500,
+        "count": 9
+      },
+      {
+        "client": "alpha",
+        "method": "GET",
+        "status": 503,
+        "count": 7
+      },
+      {
+        "client": "beta",
+        "method": "POST",
+        "status": 201,
+        "count": 45
+      },
+      {
+        "client": "beta",
+        "method": "POST",
+        "status": 502,
+        "count": 5
+      },
+      {
+        "client": "beta",
+        "method": "GET",
+        "status": 200,
+        "count": 55
+      },
+      {
+        "client": "alpha",
+        "method": "GET",
+        "status": 504,
+        "count": 3
+      },
+      {
+        "client": "beta",
+        "method": "GET",
+        "status": 500,
+        "count": 2
+      },
+      {
+        "client": "win-000",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-001",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-002",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-003",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-004",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-005",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-006",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-007",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-008",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-009",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-010",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-011",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      },
+      {
+        "client": "win-012",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-013",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-014",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-015",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-016",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-017",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-018",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-019",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-020",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-021",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-022",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      },
+      {
+        "client": "win-023",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-024",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-025",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-026",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-027",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-028",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-029",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-030",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-031",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-032",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-033",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      },
+      {
+        "client": "win-034",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-035",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-036",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-037",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-038",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-039",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-040",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-041",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-042",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-043",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-044",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      },
+      {
+        "client": "win-045",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-046",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-047",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-048",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-049",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-050",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-051",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-052",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-053",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-054",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-055",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      },
+      {
+        "client": "win-056",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-057",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-058",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-059",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-060",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-061",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-062",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-063",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-064",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-065",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-066",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      },
+      {
+        "client": "win-067",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-068",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-069",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-070",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-071",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-072",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-073",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-074",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-075",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-076",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-077",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-078",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-079",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-080",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-081",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-082",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-083",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-084",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-085",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-086",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-087",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-088",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      },
+      {
+        "client": "win-089",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-090",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-091",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-092",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-093",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-094",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-095",
+        "method": "GET",
+        "status": 404,
+        "count": 1
+      },
+      {
+        "client": "win-096",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-097",
+        "method": "GET",
+        "status": 200,
+        "count": 1
+      },
+      {
+        "client": "win-098",
+        "method": "GET",
+        "status": 500,
+        "count": 1
+      },
+      {
+        "client": "win-099",
+        "method": "GET",
+        "status": 503,
+        "count": 1
+      }
+    ],
+    "total": 551,
+    "serverErrors": 49,
+    "observedStatuses": [
+      {
+        "status": 200,
+        "count": 416
+      },
+      {
+        "status": 201,
+        "count": 45
+      },
+      {
+        "status": 404,
+        "count": 41
+      },
+      {
+        "status": 500,
+        "count": 26
+      },
+      {
+        "status": 502,
+        "count": 5
+      },
+      {
+        "status": 503,
+        "count": 15
+      },
+      {
+        "status": 504,
+        "count": 3
+      }
+    ]
+  },
+  "files": [
+    {
+      "role": "before",
+      "file": "http-cumulative-before.json",
+      "sha256": "49e2eb9f60be51221272b257a271c5e67366c5e6235b8c8476b0374e6610481a",
+      "bytes": 72702,
+      "timeUnixNano": "1794074311305668000",
+      "startTimeUnixNano": [
+        "1794074311290332000"
+      ],
+      "total": "216",
+      "ordinaryPoints": 7,
+      "overflowPoints": 1,
+      "overflowCount": "40"
+    },
+    {
+      "role": "after",
+      "file": "http-cumulative-after.json",
+      "sha256": "a567fda0a0b1053864af4df14be5f155f450b03858517c0360efeda264bd85c9",
+      "bytes": 72719,
+      "timeUnixNano": "1794074311353921000",
+      "startTimeUnixNano": [
+        "1794074311290332000"
+      ],
+      "total": "767",
+      "ordinaryPoints": 7,
+      "overflowPoints": 1,
+      "overflowCount": "145"
+    },
+    {
+      "role": "zero",
+      "file": "http-cumulative-zero.json",
+      "sha256": "36d61ca172b766fa26d4a599bb723fe20e81f93ff306398f2d7415054a074c5e",
+      "bytes": 72719,
+      "timeUnixNano": "1794074311355381000",
+      "startTimeUnixNano": [
+        "1794074311290332000"
+      ],
+      "total": "767",
+      "ordinaryPoints": 7,
+      "overflowPoints": 1,
+      "overflowCount": "145"
+    },
+    {
+      "role": "restart",
+      "file": "http-cumulative-restart.json",
+      "sha256": "e1a21d262d0e0ec8c96aeddc13ec7ea24c6c1381f38a3932c26300b0e666d11c",
+      "bytes": 72751,
+      "timeUnixNano": "1794074311405508000",
+      "startTimeUnixNano": [
+        "1794074311356052000"
+      ],
+      "total": "767",
+      "ordinaryPoints": 7,
+      "overflowPoints": 1,
+      "overflowCount": "145"
+    }
+  ],
+  "harnessSources": [
+    {
+      "file": "validation/http/main.go",
+      "sha256": "8a969dac4aa38e2c139c494007d94d40f84b54448e93f05ef5e53559b7a235cb"
+    },
+    {
+      "file": "validation/http/cumulative.go",
+      "sha256": "f1eab0183a4d20e61cb1311a9f0bfc5a6a8f2c69e0d6a7c5d5f1810280bdae40"
+    },
+    {
+      "file": "validation/go.mod",
+      "sha256": "aa2d40c84803d55a190087e1c080ae2d985da1d712dbc77dcad568ef8827a544"
+    },
+    {
+      "file": "validation/go.sum",
+      "sha256": "992dc2989e8363ea6883a1875f7141d7668193b71277391d675ce88cb7ab7cb9"
+    }
+  ],
+  "result": {
+    "K": "446",
+    "E": "21",
+    "O": "105",
+    "T": "551",
+    "truthTotal": "551",
+    "truthServerErrors": "49",
+    "baselineTotal": "216",
+    "afterTotal": "767"
+  },
+  "restart": "A second MeterProvider (a restarted SDK) served the baseline and the window workload again on the same server: same series, counts at or above the first snapshot, new start times."
+}

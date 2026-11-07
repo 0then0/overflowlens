@@ -4,7 +4,8 @@ import { fail, type ObjectValue } from './types';
 // Wire validation of one explicit-bucket HistogramDataPoint, following the OTLP
 // metrics proto. Timestamps are validated by the caller. The point may be raw
 // parser output or the materialized copy kept in an interval.
-export function readHistogramPoint(p: ObjectValue, path: string): { count: bigint } {
+export type HistogramRead = { count: bigint; bounds: number[]; buckets: bigint[] };
+export function readHistogramPoint(p: ObjectValue, path: string): HistogramRead {
   if (p.flags != null && integer(p.flags, `${path}.flags`, true, 32) !== 0n)
     fail(
       'UNSUPPORTED_FLAGS',
@@ -38,5 +39,5 @@ export function readHistogramPoint(p: ObjectValue, path: string): { count: bigin
   if (min !== undefined && max !== undefined && min > max)
     fail('INVALID_MIN_MAX', 'The histogram minimum cannot exceed its maximum.', path);
   array(p.exemplars, `${path}.exemplars`);
-  return { count };
+  return { count, bounds, buckets };
 }

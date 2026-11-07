@@ -54,6 +54,25 @@ export function readStatusCode(attrs: Record<string, unknown>, path: string): nu
   return Number(status);
 }
 
+// One point of an HTTP duration histogram: the strict SDK overflow shape, or an
+// ordinary point classified by its status code. Shared by the delta and cumulative modes.
+export function classifyHttpPoint(
+  attrs: Record<string, unknown>,
+  count: bigint,
+  path: string,
+): Points[number] {
+  if (overflowShape(attrs, path))
+    return { attributes: attrs, count: count.toString(), overflow: true };
+  const status = readStatusCode(attrs, path);
+  return {
+    attributes: attrs,
+    count: count.toString(),
+    overflow: false,
+    statusCode: String(status),
+    responseClass: status >= 500 ? 'server_error' : 'other',
+  };
+}
+
 export function analyzeHttp(stream: Stream, settings: HttpSettings): Analysis {
   try {
     if (stream.diagnostics.length)
@@ -75,7 +94,7 @@ export function analyzeHttp(stream: Stream, settings: HttpSettings): Analysis {
     if (stream.identity.temporality !== 'DELTA')
       fail(
         'UNSUPPORTED_TEMPORALITY',
-        'HTTP 5xx mode requires delta temporality; cumulative histograms are not supported.',
+        'HTTP 5xx interval mode requires delta temporality. Use the cumulative HTTP 5xx window mode with two cumulative snapshots.',
         undefined,
         'UNSUPPORTED_INPUT',
       );
@@ -105,20 +124,13 @@ export function analyzeHttp(stream: Stream, settings: HttpSettings): Analysis {
         );
       seen.add(key);
       const { count } = readHistogramPoint(p, path);
-      if (overflowShape(attrs, path)) {
-        O += count;
-        return { attributes: attrs, count: count.toString(), overflow: true };
+      const point = classifyHttpPoint(attrs, count, path);
+      if (point.overflow) O += count;
+      else {
+        K += count;
+        if (point.responseClass === 'server_error') E += count;
       }
-      const status = readStatusCode(attrs, path);
-      K += count;
-      if (status >= 500) E += count;
-      return {
-        attributes: attrs,
-        count: count.toString(),
-        overflow: false,
-        statusCode: String(status),
-        responseClass: status >= 500 ? 'server_error' : 'other',
-      };
+      return point;
     });
     return { ...calculate(K, E, O, threshold), points };
   } catch (error) {

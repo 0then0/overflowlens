@@ -6,7 +6,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/0then0/overflowlens/ci.yml?branch=main&label=checks)](https://github.com/0then0/overflowlens/actions/workflows/ci.yml)
 [![Validated SDK](https://img.shields.io/badge/validated%20SDK-Go%201.47.0-426449)](docs/validation.md)
 
-OverflowLens calculates **exact error-rate bounds after OpenTelemetry SDK cardinality overflow**. Import a saved request counter, choose a delta interval or a window between two cumulative snapshots, and compare the possible error rates with your limit. A separate mode bounds the **HTTP 5xx share** of a delta `http.server.request.duration` histogram.
+OverflowLens calculates **exact error-rate bounds after OpenTelemetry SDK cardinality overflow**. Import a saved request counter, choose a delta interval or a window between two cumulative snapshots, and compare the possible error rates with your limit. Separate modes bound the **HTTP 5xx share** of a delta `http.server.request.duration` histogram, or of the window between two cumulative snapshots of it.
 
 Imported files, reports and entered values are processed locally in your browser. There are no accounts, uploads, analytics or remote fonts. A hosted copy downloads its own application assets; analysis and JSON export do not send your data to a server. The badges above are external README images; the application does not load them.
 
@@ -57,8 +57,8 @@ Use HTTPS for remote hosting. Opening `index.html` through `file://` is unsuppor
 
 ## Analyze your data
 
-1. Choose **Delta interval**, **Cumulative window** or **HTTP 5xx histogram (delta)**. Delta and HTTP accept one OTLP JSON file or a built-in example. Cumulative accepts separate **Before** and **After** exports, or its bundled before/after example. The examples work immediately without Go, Docker, Node.js or your own data; confirm the displayed assumptions to see the result.
-2. Select one Resource/scope/metric stream and its collection boundaries. For cumulative mode, select matching streams and inspect the pair applicability status and exact `(before, after]` window.
+1. Choose **Delta interval**, **Cumulative window**, **HTTP 5xx histogram (delta)** or **HTTP 5xx histogram (cumulative window)**. Delta and HTTP delta accept one OTLP JSON file or a built-in example. The two cumulative modes accept separate **Before** and **After** exports, or a bundled before/after example. The examples work immediately without Go, Docker, Node.js or your own data; confirm the displayed assumptions to see the result.
+2. Select one Resource/scope/metric stream and its collection boundaries. For the cumulative modes, select matching streams and inspect the pair applicability status and exact `(before, after]` window; the HTTP mode also lists every passed pair check.
 3. Enter the boolean measurement outcome key, such as `success`, and select which value means error. The HTTP mode has no outcome field: its criterion is fixed to HTTP 5xx.
 4. Confirm the provenance contract after checking that it applies to your data.
 5. Enter the maximum allowed error percentage. Equality meets the limit.
@@ -91,9 +91,15 @@ New or disappearing series, unknown starts and reset-spanning windows are unsupp
 
 ### HTTP 5xx histogram
 
-This mode accepts only the `http.server.request.duration` metric as an explicit-bucket `Histogram` with delta temporality. The `count` of every datapoint is the number of completed requests. An ordinary point is classified by its integer `http.response.status_code`: 500–599 is **HTTP 5xx**, and other statuses from 100 to 499 are other responses. A missing, invalid or contradictory status refuses the calculation. The overflow point keeps the same strict single-attribute rule and is added to `O`. Bucket counts are validated when present but are not analyzed; cumulative and exponential histograms, latency and routes are out of scope.
+This mode accepts only the `http.server.request.duration` metric as an explicit-bucket `Histogram` with delta temporality. The `count` of every datapoint is the number of completed requests. An ordinary point is classified by its integer `http.response.status_code`: 500–599 is **HTTP 5xx**, and other statuses from 100 to 499 are other responses. A missing, invalid or contradictory status refuses the calculation. The overflow point keeps the same strict single-attribute rule and is added to `O`. Bucket counts are validated when present but are not analyzed; exponential histograms, latency and routes are out of scope.
 
 You must confirm that each observation is one completed request, ordinary points keep the correct status, and downstream processing changed neither counts nor attribution. A matching metric name never confirms this.
+
+### HTTP 5xx histogram, cumulative window
+
+Go SDKs and the standard OTLP exporter default to cumulative temporality, so this mode compares two cumulative `http.server.request.duration` exports. For every matched series it subtracts the `count` of **Before** from **After** with `BigInt`, classifies the increment by `http.response.status_code` (500–599 is HTTP 5xx) and feeds `E`, `O` and `T` of the window to the same exact `E/T` … `(E+O)/T` bounds. Requests counted before the first snapshot are excluded.
+
+The pair is applicable only with the same Resource, scope and metric definition, cumulative temporality, strictly ordered boundaries, the same set of series (nothing is zero-filled), unchanged known start times, no decrease of any `count` and an unchanged bucket layout. A new or missing series, an unknown start, a reset or an SDK restart is refused with an explicit diagnostic. One corrupt histogram point blocks the pair. Buckets, `sum`, `min` and `max` never estimate latency. Confirmation additionally covers one continuous source history. A threshold change reuses the prepared counts; any change of file, stream or boundary clears the confirmation and the result.
 
 ## Data from an OpenTelemetry Collector
 
@@ -118,7 +124,7 @@ Cumulative mode first subtracts each matched point's before count from its after
 
 Counts, fractions and comparisons use `BigInt`. Rounding affects display only. See [mathematics](docs/mathematics.md) for the proof and endpoint witnesses.
 
-Delta reports use schema v1, and HTTP 5xx histogram reports use schema v3 with the input metric, classification criterion, source hash, interval, confirmed conditions and exact results. Cumulative reports use schema v2, preserving both original-file SHA-256 hashes, selected identities, exact boundaries, settings, assumptions, applicability checks, matched counts/increments, fractions and witnesses. Refusal reports retain diagnostics and selected inputs without inventing rates. A hash identifies bytes, not authenticity.
+Delta reports use schema v1, and HTTP 5xx histogram reports use schema v3 with the input metric, classification criterion, source hash, interval, confirmed conditions and exact results. Cumulative HTTP 5xx reports use schema v4 with both source hashes, selected identities, boundaries, source and final counts, increments, classification, applicability conditions and the exact bounds. Cumulative reports use schema v2, preserving both original-file SHA-256 hashes, selected identities, exact boundaries, settings, assumptions, applicability checks, matched counts/increments, fractions and witnesses. Refusal reports retain diagnostics and selected inputs without inventing rates. A hash identifies bytes, not authenticity.
 
 ## Build from source
 

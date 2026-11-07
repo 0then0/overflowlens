@@ -4,7 +4,7 @@ This reference defines the saved OTLP data that OverflowLens can analyze. Start 
 
 ## Files and representation
 
-Import uncompressed UTF-8 JSON `ExportMetricsServiceRequest` files. Delta and HTTP 5xx histogram modes use one file; cumulative mode uses two separate Before and After exports. Each file is limited to **5 MiB**, and a pair to **10 MiB combined**. Size checks occur before reading.
+Import uncompressed UTF-8 JSON `ExportMetricsServiceRequest` files. Delta and delta HTTP 5xx histogram modes use one file; the cumulative Sum and cumulative HTTP 5xx modes use two separate Before and After exports. Each file is limited to **5 MiB**, and a pair to **10 MiB combined**. Size checks occur before reading.
 
 Use OTLP lowerCamelCase field names, such as `resourceMetrics`, `scopeMetrics`, `dataPoints`, `asInt`, `startTimeUnixNano` and `timeUnixNano`. Enum values must be numeric. Integer fields accept decimal strings or JSON numeric integer tokens, preserving all digits. Fractional and exponent forms of integer fields are unsupported.
 
@@ -62,7 +62,7 @@ Structural applicability is checked before provenance confirmation. Pairing and 
 
 ## HTTP 5xx histogram
 
-The third mode analyzes one complete delta interval of the stable HTTP server metric `http.server.request.duration` as an explicit-bucket `Histogram` (`histogram` in OTLP JSON) with `aggregationTemporality: 1`. Other metrics, even with an identical shape, `exponentialHistogram`, `Sum` and cumulative histograms are unsupported. A cumulative histogram is refused by temporality without reading its points. Unit is recorded but not required.
+The third mode analyzes one complete delta interval of the stable HTTP server metric `http.server.request.duration` as an explicit-bucket `Histogram` (`histogram` in OTLP JSON) with `aggregationTemporality: 1`. Other metrics, even with an identical shape, `exponentialHistogram` and `Sum` are unsupported. A cumulative histogram is imported as a snapshot, with the same point validation, and this mode refuses it by temporality; use the [cumulative window](#cumulative-http-5xx-window). Unit is recorded but not required.
 
 Each datapoint `count` is the number of requests. It is an unsigned int64 (`fixed64`) given as a decimal string or an integer token. Following proto3 JSON, an omitted `count` is zero, and values above `Number.MAX_SAFE_INTEGER` keep every digit. Datapoints need unsigned int64 timestamps with `0 < startTimeUnixNano < timeUnixNano`, as for Sum intervals, and measurement attribute sets must be unique within an interval.
 
@@ -79,6 +79,31 @@ An **ordinary** point needs an integer `http.response.status_code` from 100 to 5
 An **overflow** point follows exactly the rule in [SDK overflow](#sdk-overflow-and-provenance): one attribute, `otel.metric.overflow = true`. Its `count` is `O`.
 
 The confirmation states that each histogram observation is one completed HTTP request, ordinary points retain the correct status, and downstream processing changed neither counts nor attribution, in addition to the complete-export and genuine-overflow conditions. The metric name alone never establishes this. The bounds `E/T` and `(E+O)/T` and the threshold rules are those in [mathematics](mathematics.md), with `E` the 5xx count. Reports use schema v3 (see below).
+
+## Cumulative HTTP 5xx window
+
+The fourth mode pairs two cumulative exports of `http.server.request.duration` (`aggregationTemporality: 2`), the default of Go SDKs and the standard OTLP exporter. Each selected stream needs exactly one collection timestamp shared by all points, and the window is `(before, after]`. Histogram points are validated with the rules of the delta mode (flags, `count`, buckets, `sum`, `min`, `max`, exemplars) when the file is imported. One invalid point anywhere in a selected stream blocks the pair; other streams stay usable.
+
+A supported pair has:
+
+1. Identical canonical Resource, scope, schema URLs, metric name, type, unit and temporality (cumulative). `description` is not identifying.
+2. Strictly ordered collection timestamps.
+3. Identical sets of unique measurement identities, including the overflow point. Identity is the full normalized attribute set; point and attribute order are irrelevant. A new, missing or one-sided overflow series refuses the pair. Nothing is zero-filled or intersected.
+4. A known start time per series with `0 < start < collection`, unchanged between the two points. Different series may have different starts.
+5. `afterCount >= beforeCount` for every matched point (omitted `count` is zero).
+6. An unchanged bucket layout and nondecreasing bucket counts per series (see below).
+7. The status and overflow rules of the delta HTTP mode: an integer `http.response.status_code` from 100 to 599 on every ordinary point (500–599 is 5xx), and exactly one attribute `otel.metric.overflow = true` on the overflow point.
+
+Each increment is `afterCount − beforeCount` as `BigInt`. K, E and O are sums of increments over ordinary points, ordinary 5xx points and the overflow point; baseline observations are not part of them. Zero increments are valid; a zero total gives `NO_DATA`. Snapshot totals are reported as boundary counts only.
+
+**Which metadata changes affect applicability.** The calculation uses only `count`, so a field matters only if it can make two counts incomparable or show that the series is not one continuous history.
+
+- Resource, scope, schema URLs, name, type, unit and temporality identify the stream; a change refuses with `STREAM_MISMATCH` (or a type, metric or temporality refusal).
+- A changed start time is a reset or restart (`CHANGED_START_TIME`). It refuses even when every count is higher, which is what a restarted SDK that served enough requests looks like.
+- A changed `explicitBounds` sequence or buckets present on one side only (`CHANGED_BUCKET_LAYOUT`), or a bucket that decreases while the total does not (`DECREASING_BUCKET`), contradict one continuous cumulative aggregation: an SDK that reconfigures or resets an aggregator reports a new start time. With an unchanged start, the series was rewritten or reset unnoticed, so the pair is refused. Buckets are used only for this check.
+- `description`, `sum`, `min`, `max` and exemplars cannot change the count increment and do not affect applicability, even if `sum` decreases (negative observations are legal). They are still validated and never estimate latency.
+
+Structural applicability is checked before the provenance confirmation, which states complete exports from one continuous source history with no resets, one completed request per observation, correct status codes, unchanged counts and attribution downstream, and genuine SDK overflow semantics. Pairing and aggregation are reused while only the threshold or confirmation changes. A file, stream or boundary change clears the confirmation and the result. Reports use schema v4.
 
 ## Attribute values
 
@@ -120,6 +145,8 @@ These are user assumptions. Matching metadata and source hashes cannot prove com
 Refusals contain a diagnostic code, explanation and path when available. They are distinct from mathematical uncertainty. A structurally applicable pair can still be refused for unconfirmed provenance or an invalid threshold. See [mathematics](mathematics.md) for exact decisions and endpoint witnesses.
 
 ## Reports and state
+
+Cumulative HTTP 5xx schema v4 adds `mode: http-5xx-histogram-cumulative`, both `sources` (name, size, SHA-256), `selectedInputs` (identity, snapshot ID, boundary), `window`, `inputMetric`, `classification`, `assumptions.conditions` with the confirmation, `applicability` (checks and matched-point count, or the refusal), `counts` at the before boundary, the after boundary and in the window, and `result` with exact fractions. Each entry of `result.points` has canonical attributes, `startTimeUnixNano`, `beforeCount`, `afterCount`, `count` (the increment), `statusCode` and `responseClass`. A refusal keeps sources, identities and diagnostics without totals, `counts` or witnesses.
 
 HTTP 5xx schema v3 adds `mode: http-5xx-histogram`, `inputMetric` (name, type, buckets, temporality, unit), `classification` (criterion, attribute, status ranges), the source name, size and SHA-256, exact boundaries, `assumptions.conditions` with the user confirmation, and exact decimal-string counts and fractions per point. A refusal keeps these without invented totals.
 

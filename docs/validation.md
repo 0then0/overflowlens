@@ -67,9 +67,24 @@ The workload has 684 requests: seven fixed attribute sets (clients `alpha` and `
 
 Both files contain three streams, so the other histograms test that the name restriction refuses a metric of identical shape. The harness fails if conservation, truth containment or the overflow expectation fails; `tests/http-sdk.test.ts` repeats them against the saved files and the TypeScript core. Port numbers and timestamps change on every run.
 
+## Cumulative HTTP 5xx window validation
+
+`npm run validate:http-cumulative` runs `go run ./http cumulative`, then `tests/http-cumulative-sdk.test.ts`. It uses the same real otelhttp v0.72.0 server as the delta harness, with the SDK default: `sdk.NewManualReader()` without a temporality selector (cumulative for every instrument), the default Histogram aggregation, no Views and an explicit **cardinality limit of 8**. The versions, settings, commands, workload plans, source SHA-256 of the harness files and the SHA-256 and size of each OTLP file are recorded in `fixtures/http/cumulative-manifest.json`. As elsewhere, the official exporter's protobuf is converted by official ProtoJSON; the JSON is never built by hand.
+
+Sequence, on one loopback server whose address and port stay stable:
+
+1. Before the first snapshot, 216 requests: seven fixed ordinary series (clients `alpha` and `beta`, statuses 200, 201, 404, 500, 502, 503) plus 40 unique clients that overflow. Export `http-cumulative-before.json`.
+2. A deterministic window workload of 551 requests: the seven retained series, known clients with new statuses (new attribute sets overflow), and 100 unique clients. Every response is counted independently by the client and cross-checked by a server-side tally. A barrier waits for every handler, including the metric recording. Export `http-cumulative-after.json`.
+3. A third collection without new requests: `http-cumulative-zero.json`.
+4. A restarted SDK: a new provider serves the baseline and the window workload again on the same server. Its series are identical and every count is at least the first snapshot's, so only the changed start times reveal the restart: `http-cumulative-restart.json`.
+
+The harness differences the SDK structs independently of the JSON: 767 requests at the second snapshot minus 216 at the first give the 551-request window, with `K=446, E=21, O=105`, bounds 21/551 … 126/551 (≈3.81% … ≈22.87%), containing the true 49/551 (≈8.89%). Overflow is present at both snapshots, the series set is identical, and the harness fails if conservation, containment or the restart properties fail.
+
+The TypeScript test repeats these checks against the saved files: hashes, tallies, window counts, truth containment, baseline exclusion, the zero window (`NO_DATA`) and the restart refusal (`CHANGED_START_TIME`, although a count-only comparison would accept the pair). The browser spec opens the pair, checks the counts, changes the threshold, exports the report and checks the exact truth containment from the exported fractions. Port numbers and timestamps change on every run.
+
 ## Synthetic controls
 
-Malformed controls alter copies of valid exports to test individual decreases, missing counterparts, stream mismatches and inconsistent collection boundaries. They are test inputs, not SDK-produced fixtures.
+Malformed controls alter copies of valid exports to test cumulative HTTP windows (reordered points and attributes, integers above int64, zero increments, exact threshold equality, changed starts, decreasing counts, mismatched series, changed bucket layout and corrupt points) and individual decreases, missing counterparts, stream mismatches and inconsistent collection boundaries. They are test inputs, not SDK-produced fixtures.
 
 Other synthetic controls cover large integer precision, per-series starts, attribute identity order, conflicting definitions, flags, overflow shape, exact threshold equality, deterministic reports and reuse of prepared counts. The mathematical demo and endpoint histories demonstrate information loss; they are distinct from the independently recorded SDK workload.
 

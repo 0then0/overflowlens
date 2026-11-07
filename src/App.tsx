@@ -8,8 +8,15 @@ import { analyze, outcomeCandidates, type Settings } from './core/analyze';
 import { formatPercent, scalePercent } from './core/calculate';
 import { type CumulativeSettings, calculateCumulative, pairCumulative } from './core/cumulative';
 import { analyzeHttp } from './core/http';
+import { calculateHttpCumulative, pairHttpCumulative } from './core/httpCumulative';
 import { attributes } from './core/parse';
-import { makeCumulativeReport, makeHttpReport, makeReport, type Source } from './core/report';
+import {
+  makeCumulativeReport,
+  makeHttpCumulativeReport,
+  makeHttpReport,
+  makeReport,
+  type Source,
+} from './core/report';
 import {
   type Analysis,
   CONTRACT,
@@ -18,6 +25,7 @@ import {
   diagnostic,
   HTTP_CONTRACT,
   HTTP_CRITERION,
+  HTTP_CUMULATIVE_CONTRACT,
   HTTP_METRIC,
   HTTP_STATUS_ATTRIBUTE,
   type ImportData,
@@ -45,16 +53,24 @@ const defaults: Settings = {
   contractConfirmed: false,
 };
 type Side = 'before' | 'after';
-type Mode = 'delta' | 'cumulative' | 'http';
+type Mode = 'delta' | 'cumulative' | 'http' | 'http-cumulative';
+const isPaired = (mode: Mode) => mode === 'cumulative' || mode === 'http-cumulative';
+const isHttp = (mode: Mode) => mode === 'http' || mode === 'http-cumulative';
 function supports(mode: Mode, s: Stream) {
   const { identity } = s;
   if (s.diagnostics.length) return false;
-  return mode === 'http'
+  return isHttp(mode)
     ? identity.type === 'histogram' &&
         identity.name === HTTP_METRIC &&
-        identity.temporality === 'DELTA'
+        identity.temporality === (mode === 'http' ? 'DELTA' : 'CUMULATIVE')
     : identity.type === 'sum' &&
         identity.temporality === (mode === 'delta' ? 'DELTA' : 'CUMULATIVE');
+}
+function boundaryTotal(
+  points: { beforeCount: string; afterCount: string }[],
+  key: 'beforeCount' | 'afterCount',
+) {
+  return points.reduce((n, p) => n + BigInt(p[key]), 0n).toString();
 }
 function fraction(r: Rational) {
   return `${r.numerator} / ${r.denominator}`;
@@ -156,7 +172,7 @@ export function App() {
   );
   const candidates = useMemo(() => {
     if (!stream) return [];
-    if (mode === 'http') return [];
+    if (isHttp(mode)) return [];
     if (mode === 'delta') return outcomeCandidates(stream, settings.intervalId);
     const keys = new Set<string>();
     for (const p of stream.snapshots.find((s) => s.id === beforeSnapshotId)?.points ?? []) {
@@ -185,12 +201,29 @@ export function App() {
         : null,
     [mode, stream, afterStream, selection],
   );
+  // Only the boundaries and streams prepare the HTTP window; a threshold or
+  // confirmation change reuses the prepared counts.
+  const httpPairing = useMemo(
+    () =>
+      mode === 'http-cumulative' && stream && afterStream
+        ? pairHttpCumulative(stream, afterStream, { beforeSnapshotId, afterSnapshotId })
+        : null,
+    [mode, stream, afterStream, beforeSnapshotId, afterSnapshotId],
+  );
+  const applicability = mode === 'http-cumulative' ? httpPairing : pairing;
   const result: Analysis | null = useMemo(() => {
     if (!stream || busy || afterBusy) return null;
     if (mode === 'http') return analyzeHttp(stream, settings);
     if (mode === 'delta') return analyze(stream, settings);
+    if (mode === 'http-cumulative')
+      return httpPairing
+        ? calculateHttpCumulative(httpPairing, {
+            threshold: settings.threshold,
+            contractConfirmed: settings.contractConfirmed,
+          })
+        : null;
     return pairing ? calculateCumulative(pairing, cumulativeSettings) : null;
-  }, [stream, pairing, settings, cumulativeSettings, mode, busy, afterBusy]);
+  }, [stream, pairing, httpPairing, settings, cumulativeSettings, mode, busy, afterBusy]);
   const valid = result && 'K' in result ? result : null;
   function reset(side?: Side) {
     for (const key of side ? [side] : (['before', 'after'] as const)) {
@@ -258,7 +291,14 @@ export function App() {
         bytes: bytes.length,
         sha256: Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join(''),
       });
-      const first = parsed.streams.find((s) => supports(mode, s)) ?? parsed.streams[0];
+      // A corrupt duration stream is still the one to show: its exact refusal is more useful
+      // than an unrelated stream's unsupported metric.
+      const first =
+        parsed.streams.find((s) => supports(mode, s)) ??
+        (mode === 'http-cumulative'
+          ? parsed.streams.find((s) => s.identity.name === HTTP_METRIC)
+          : undefined) ??
+        parsed.streams[0];
       if (first) {
         (side === 'before' ? setStreamId : setAfterStreamId)(first.id);
         (side === 'before' ? setBeforeSnapshotId : setAfterSnapshotId)(
@@ -324,25 +364,38 @@ export function App() {
   }
   function exportReport() {
     if (!stream || !result || !source) return;
-    if (mode === 'cumulative' && (!afterStream || !afterSource)) return;
+    if (isPaired(mode) && (!afterStream || !afterSource)) return;
     const report =
-      mode === 'cumulative' && afterStream && afterSource
-        ? makeCumulativeReport(stream, afterStream, cumulativeSettings, result, {
-            before: source,
-            after: afterSource,
-          })
-        : mode === 'http'
-          ? makeHttpReport(
-              stream,
-              {
-                intervalId: settings.intervalId,
-                threshold: settings.threshold,
-                contractConfirmed: settings.contractConfirmed,
-              },
-              result,
-              source,
-            )
-          : makeReport(stream, settings, result, source);
+      mode === 'http-cumulative' && afterStream && afterSource
+        ? makeHttpCumulativeReport(
+            stream,
+            afterStream,
+            {
+              beforeSnapshotId,
+              afterSnapshotId,
+              threshold: settings.threshold,
+              contractConfirmed: settings.contractConfirmed,
+            },
+            result,
+            { before: source, after: afterSource },
+          )
+        : mode === 'cumulative' && afterStream && afterSource
+          ? makeCumulativeReport(stream, afterStream, cumulativeSettings, result, {
+              before: source,
+              after: afterSource,
+            })
+          : mode === 'http'
+            ? makeHttpReport(
+                stream,
+                {
+                  intervalId: settings.intervalId,
+                  threshold: settings.threshold,
+                  contractConfirmed: settings.contractConfirmed,
+                },
+                result,
+                source,
+              )
+            : makeReport(stream, settings, result, source);
     const url = URL.createObjectURL(new Blob([report], { type: 'application/json' }));
     const link = document.createElement('a');
     link.href = url;
@@ -403,9 +456,10 @@ export function App() {
                   <option value="delta">Delta interval</option>
                   <option value="cumulative">Cumulative window</option>
                   <option value="http">HTTP 5xx histogram (delta)</option>
+                  <option value="http-cumulative">HTTP 5xx histogram (cumulative window)</option>
                 </select>
               </label>
-              {mode === 'cumulative' && (
+              {isPaired(mode) && (
                 <p className="fine">
                   Two full exports · 5 MiB per file · 10 MiB per pair. Before is the baseline; after
                   ends the window.
@@ -416,7 +470,7 @@ export function App() {
                   <path d="M12 16V4m-4 4 4-4 4 4M4 15v5h16v-5" />
                 </svg>
                 <strong>
-                  {mode === 'cumulative' ? 'Before: ' : ''}
+                  {isPaired(mode) ? 'Before: ' : ''}
                   {busy ? 'Reading local file…' : (source?.name ?? 'Choose an OTLP JSON file')}
                 </strong>
                 <span>ExportMetricsServiceRequest · Up to 5 MiB</span>
@@ -430,7 +484,7 @@ export function App() {
                   }}
                 />
               </label>
-              {mode === 'cumulative' && (
+              {isPaired(mode) && (
                 <label className="file-area" htmlFor="after-file">
                   <strong>
                     After:{' '}
@@ -476,9 +530,42 @@ export function App() {
                   const afterToken = ++revision.current.after;
                   reset();
                   setBusy(true);
-                  setAfterBusy(mode === 'cumulative');
+                  setAfterBusy(isPaired(mode));
                   if (mode === 'http') {
                     await load(httpExample, 'http-overflow.json · SDK example', beforeToken);
+                  } else if (mode === 'http-cumulative') {
+                    // Loaded on demand: the real exports are large and most visits never need them.
+                    let examples: [{ default: string }, { default: string }];
+                    try {
+                      examples = await Promise.all([
+                        import('../fixtures/http/http-cumulative-before.json?raw'),
+                        import('../fixtures/http/http-cumulative-after.json?raw'),
+                      ]);
+                    } catch {
+                      if (revision.current.before === beforeToken) {
+                        setBusy(false);
+                        setAfterBusy(false);
+                        setImportError({
+                          status: 'INVALID_INPUT',
+                          code: 'EXAMPLE_UNAVAILABLE',
+                          message: 'The bundled example could not be loaded.',
+                        });
+                      }
+                      return;
+                    }
+                    await Promise.all([
+                      load(
+                        examples[0].default,
+                        'http-cumulative-before.json · SDK example',
+                        beforeToken,
+                      ),
+                      load(
+                        examples[1].default,
+                        'http-cumulative-after.json · SDK example',
+                        afterToken,
+                        'after',
+                      ),
+                    ]);
                   } else if (mode === 'cumulative') {
                     await Promise.all([
                       load(cumulativeBefore, 'cumulative-before.json · SDK example', beforeToken),
@@ -497,7 +584,7 @@ export function App() {
                     revision.current.after === afterToken
                   )
                     setSettings((current) =>
-                      mode === 'http' ? current : { ...current, outcomeAttribute: 'success' },
+                      isHttp(mode) ? current : { ...current, outcomeAttribute: 'success' },
                     );
                 }}
               >
@@ -505,15 +592,19 @@ export function App() {
                   ? 'Load the 900 / 1 / 99 example'
                   : mode === 'http'
                     ? 'Load the HTTP 5xx SDK example'
-                    : 'Load the cumulative before / after example'}{' '}
+                    : mode === 'http-cumulative'
+                      ? 'Load the cumulative HTTP 5xx before / after example'
+                      : 'Load the cumulative before / after example'}{' '}
                 <span>↗</span>
               </button>
               <p className="fine">
                 {mode === 'cumulative'
                   ? 'Synthetic SDK example: 1,000 requests in the window, 0.1%–10% possible errors; the known true rate is 3.4%. Baseline requests are excluded.'
-                  : mode === 'http'
-                    ? 'Real OpenTelemetry Go otelhttp export with a small SDK cardinality limit: known requests, known HTTP 5xx and an overflow count with unknown status codes.'
-                    : 'Synthetic example: 900 known successes, 1 known error and 99 requests with unknown outcomes.'}{' '}
+                  : mode === 'http-cumulative'
+                    ? 'Two real OpenTelemetry Go otelhttp cumulative exports with a small SDK cardinality limit and overflow at both snapshots. Only the requests between the snapshots are counted; baseline requests are excluded.'
+                    : mode === 'http'
+                      ? 'Real OpenTelemetry Go otelhttp export with a small SDK cardinality limit: known requests, known HTTP 5xx and an overflow count with unknown status codes.'
+                      : 'Synthetic example: 900 known successes, 1 known error and 99 requests with unknown outcomes.'}{' '}
                 Confirm the assumptions below to analyze it. Imported files and reports are
                 processed locally in your browser; the hosted app downloads its own assets.
               </p>
@@ -541,7 +632,7 @@ export function App() {
                 <h2>Select the interval</h2>
               </div>
               <label>
-                {mode === 'cumulative' ? 'Before metric stream' : 'Metric stream'}
+                {isPaired(mode) ? 'Before metric stream' : 'Metric stream'}
                 <select
                   disabled={!data || busy || afterBusy}
                   value={streamId}
@@ -595,7 +686,7 @@ export function App() {
                   </dl>
                 </details>
               )}
-              {mode !== 'cumulative' ? (
+              {!isPaired(mode) ? (
                 <>
                   <label>
                     Collection interval
@@ -647,7 +738,7 @@ export function App() {
                           {i + 1}. {s.identity.name} · {s.identity.scope.name} ·{' '}
                           {s.identity.temporality}
                           {s.id === stream?.id ? ' · matching identity' : ' · different identity'}
-                          {!supports('cumulative', s) ? ' · unavailable' : ''}
+                          {!supports(mode, s) ? ' · unavailable' : ''}
                         </option>
                       ))}
                     </select>
@@ -697,15 +788,31 @@ export function App() {
                       </code>
                     </p>
                   )}
+                  {mode === 'http-cumulative' && (
+                    <p className="fine" data-testid="criterion">
+                      Criterion: <strong>{HTTP_CRITERION}</strong>,{' '}
+                      <code>{HTTP_STATUS_ATTRIBUTE}</code> from 500 to 599. Only the{' '}
+                      <code>count</code> increment of each matched series is used; buckets, sum, min
+                      and max are checked but never estimate latency. The two exports must contain
+                      the same series; missing or new series are never filled with zeros.
+                    </p>
+                  )}
                   <div aria-live="polite" data-testid="applicability" className="fine">
-                    {pairing?.status === 'APPLICABLE'
+                    {applicability?.status === 'APPLICABLE'
                       ? settings.contractConfirmed
                         ? 'Pair structurally applicable. Provenance confirmed by you.'
                         : 'Pair structurally applicable. Provenance still requires your confirmation.'
-                      : pairing
-                        ? `${pairing.diagnostic.code}: ${pairing.diagnostic.message}`
+                      : applicability
+                        ? `${applicability.diagnostic.code}: ${applicability.diagnostic.message}`
                         : 'Import and select both snapshots to check pair applicability.'}
                   </div>
+                  {mode === 'http-cumulative' && httpPairing?.status === 'APPLICABLE' && (
+                    <ul className="checks" data-testid="pair-checks">
+                      {httpPairing.evidence.checks.map((check) => (
+                        <li key={check}>✓ {check}</li>
+                      ))}
+                    </ul>
+                  )}
                 </>
               )}
             </section>
@@ -717,7 +824,7 @@ export function App() {
               <label className="contract">
                 <input
                   type="checkbox"
-                  disabled={!stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)}
+                  disabled={!stream || busy || afterBusy || (isPaired(mode) && !afterStream)}
                   checked={settings.contractConfirmed}
                   onChange={(e) =>
                     setSettings((s) => ({ ...s, contractConfirmed: e.target.checked }))
@@ -726,17 +833,19 @@ export function App() {
                 <span>
                   {mode === 'cumulative'
                     ? CUMULATIVE_CONTRACT
-                    : mode === 'http'
-                      ? HTTP_CONTRACT
-                      : CONTRACT}
+                    : mode === 'http-cumulative'
+                      ? HTTP_CUMULATIVE_CONTRACT
+                      : mode === 'http'
+                        ? HTTP_CONTRACT
+                        : CONTRACT}
                 </span>
               </label>
               <p className="fine">
-                {mode === 'http'
+                {isHttp(mode)
                   ? 'This is your assumption. A matching metric name never confirms it: the file cannot prove request semantics, status attribution, completeness or SDK origin.'
                   : 'Choose the outcome before confirming. This is your assumption. A JSON file cannot prove completeness, SDK origin or synchronous instrumentation.'}
               </p>
-              {mode === 'http' ? (
+              {isHttp(mode) ? (
                 <label>
                   Maximum HTTP 5xx rate (%)
                   <input
@@ -753,9 +862,7 @@ export function App() {
                     <input
                       list="outcomes"
                       placeholder="e.g. success"
-                      disabled={
-                        !stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)
-                      }
+                      disabled={!stream || busy || afterBusy || (isPaired(mode) && !afterStream)}
                       value={settings.outcomeAttribute}
                       onChange={(e) =>
                         setSettings((s) => ({
@@ -777,9 +884,7 @@ export function App() {
                     <label>
                       Error value
                       <select
-                        disabled={
-                          !stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)
-                        }
+                        disabled={!stream || busy || afterBusy || (isPaired(mode) && !afterStream)}
                         value={String(settings.errorValue)}
                         onChange={(e) =>
                           setSettings((s) => ({
@@ -797,9 +902,7 @@ export function App() {
                       Maximum error rate (%)
                       <input
                         inputMode="decimal"
-                        disabled={
-                          !stream || busy || afterBusy || (mode === 'cumulative' && !afterStream)
-                        }
+                        disabled={!stream || busy || afterBusy || (isPaired(mode) && !afterStream)}
                         value={settings.threshold}
                         onChange={(e) => setSettings((s) => ({ ...s, threshold: e.target.value }))}
                       />
@@ -822,7 +925,9 @@ export function App() {
                     ? 'INTERVAL ANALYSIS'
                     : mode === 'http'
                       ? 'HTTP 5XX HISTOGRAM'
-                      : 'CUMULATIVE WINDOW'}
+                      : mode === 'http-cumulative'
+                        ? 'HTTP 5XX CUMULATIVE WINDOW'
+                        : 'CUMULATIVE WINDOW'}
                 </span>
               </div>
               {!result ? (
@@ -830,9 +935,11 @@ export function App() {
                   <div className="empty-symbol">[ ? ]</div>
                   <h2>Your count tells part of the story.</h2>
                   <p>
-                    {mode === 'http'
-                      ? 'Import an export or load the example, then select the interval and confirm the conditions to see the HTTP 5xx bounds.'
-                      : 'Import an export or load the example, then select the outcome and confirm its provenance to see the rest.'}
+                    {mode === 'http-cumulative'
+                      ? 'Import the Before and After exports or load the example, check the pair and confirm the conditions to see the HTTP 5xx bounds for the window.'
+                      : mode === 'http'
+                        ? 'Import an export or load the example, then select the interval and confirm the conditions to see the HTTP 5xx bounds.'
+                        : 'Import an export or load the example, then select the outcome and confirm its provenance to see the rest.'}
                   </p>
                 </div>
               ) : valid ? (
@@ -846,7 +953,7 @@ export function App() {
                           : '?'}
                     </span>
                     <h2>
-                      {mode === 'cumulative'
+                      {isPaired(mode)
                         ? labels[valid.status].replace('imported interval', 'cumulative window')
                         : labels[valid.status]}
                     </h2>
@@ -857,7 +964,7 @@ export function App() {
                         {formatPercent(valid.lower)} <span>…</span> {formatPercent(valid.upper)}
                       </div>
                       <p className="range-caption">
-                        {mode === 'http'
+                        {isHttp(mode)
                           ? valid.O > 0n
                             ? 'Possible true HTTP 5xx share · nonzero uncertainty'
                             : 'Exact HTTP 5xx share · no overflow observations'
@@ -870,7 +977,7 @@ export function App() {
                         upper={valid.upper}
                         threshold={valid.threshold}
                         uncertain={valid.O > 0n}
-                        subject={mode === 'http' ? 'HTTP 5xx rate' : 'error rate'}
+                        subject={isHttp(mode) ? 'HTTP 5xx rate' : 'error rate'}
                       />
                       <div className="explanation">
                         <strong>
@@ -884,10 +991,10 @@ export function App() {
                           {valid.status === 'INDETERMINATE'
                             ? 'Some allocations of the overflow count meet the threshold, and others exceed it. These data cannot settle the question.'
                             : valid.status === 'WITHIN_LIMIT'
-                              ? mode === 'http'
+                              ? isHttp(mode)
                                 ? 'Even if every overflow request was an HTTP 5xx response, the share would remain at or below the maximum.'
                                 : 'Even if every overflow request was an error, the error rate would remain at or below the maximum.'
-                              : mode === 'http'
+                              : isHttp(mode)
                                 ? 'Known HTTP 5xx responses alone exceed the maximum, even if no overflow request was a 5xx response.'
                                 : 'Known errors alone exceed the maximum, even if every overflow request was successful.'}
                         </p>
@@ -915,7 +1022,7 @@ export function App() {
             </section>
             <section className="panel counts-panel">
               <h2>Every observation accounted for</h2>
-              {mode === 'http' && stream && (
+              {isHttp(mode) && stream && (
                 <dl className="selection" data-testid="selection">
                   <dt>Criterion</dt>
                   <dd>{HTTP_CRITERION}</dd>
@@ -924,14 +1031,41 @@ export function App() {
                     {stream.identity.name} · {stream.identity.scope.name || '(unnamed scope)'} ·{' '}
                     {stream.identity.temporality}
                   </dd>
-                  <dt>Interval</dt>
-                  <dd>
-                    {settings.intervalId ? (
-                      <code>{settings.intervalId.replace(':', ' → ')} ns</code>
-                    ) : (
-                      '—'
-                    )}
-                  </dd>
+                  {mode === 'http-cumulative' ? (
+                    <>
+                      <dt>Window</dt>
+                      <dd data-testid="window">
+                        {beforeSnapshotId && afterSnapshotId ? (
+                          <>
+                            <code>
+                              ({beforeSnapshotId}, {afterSnapshotId}] ns
+                            </code>
+                            <br />
+                            {time(beforeSnapshotId)} → {time(afterSnapshotId)}
+                          </>
+                        ) : (
+                          '—'
+                        )}
+                      </dd>
+                      <dt>Counts at the boundaries</dt>
+                      <dd data-testid="boundary-counts">
+                        {valid && httpPairing?.status === 'APPLICABLE'
+                          ? `${boundaryTotal(httpPairing.evidence.points, 'beforeCount')} before → ${boundaryTotal(httpPairing.evidence.points, 'afterCount')} after; baseline excluded`
+                          : '—'}
+                      </dd>
+                    </>
+                  ) : (
+                    <>
+                      <dt>Interval</dt>
+                      <dd>
+                        {settings.intervalId ? (
+                          <code>{settings.intervalId.replace(':', ' → ')} ns</code>
+                        ) : (
+                          '—'
+                        )}
+                      </dd>
+                    </>
+                  )}
                 </dl>
               )}
               <div className="counts">
@@ -939,7 +1073,7 @@ export function App() {
                   <div key={key}>
                     <span>
                       {
-                        (mode === 'http'
+                        (isHttp(mode)
                           ? ['Known requests', 'Known HTTP 5xx', 'SDK overflow', 'Total requests']
                           : ['Known requests', 'Known errors', 'SDK overflow', 'Total requests'])[i]
                       }{' '}
@@ -950,7 +1084,7 @@ export function App() {
                 ))}
               </div>
               <p className="fine">
-                {mode === 'http' ? 'Known non-5xx responses' : 'Known successes'} = K − E
+                {isHttp(mode) ? 'Known non-5xx responses' : 'Known successes'} = K − E
                 {valid ? ` = ${valid.K - valid.E}` : ''}. The denominator includes overflow.
               </p>
             </section>
@@ -962,7 +1096,7 @@ export function App() {
                   <code>E / T</code>
                   {valid?.lower && <p>{fraction(valid.lower)}</p>}
                   <p>
-                    {mode === 'http'
+                    {isHttp(mode)
                       ? 'No overflow request is an HTTP 5xx response.'
                       : 'All overflow requests succeed.'}
                   </p>
@@ -972,7 +1106,7 @@ export function App() {
                   <code>(E + O) / T</code>
                   {valid?.upper && <p>{fraction(valid.upper)}</p>}
                   <p>
-                    {mode === 'http'
+                    {isHttp(mode)
                       ? 'Every overflow request is an HTTP 5xx response.'
                       : 'All overflow requests fail.'}
                   </p>
@@ -990,7 +1124,17 @@ export function App() {
               )}
               <details>
                 <summary>When this model applies</summary>
-                {mode === 'http' ? (
+                {mode === 'http-cumulative' ? (
+                  <p>
+                    Two complete cumulative exports of the same explicit-bucket{' '}
+                    <code>{HTTP_METRIC}</code> Histogram from one continuous history, with the same
+                    series, unchanged start times, nondecreasing counts and an unchanged bucket
+                    layout. Each point <code>count</code> increment is the number of completed
+                    requests, and every ordinary point has an integer{' '}
+                    <code>{HTTP_STATUS_ATTRIBUTE}</code>. Exponential histograms, resets, latency
+                    and routes are not analyzed.
+                  </p>
+                ) : mode === 'http' ? (
                   <p>
                     One complete delta interval of an explicit-bucket <code>{HTTP_METRIC}</code>{' '}
                     Histogram. Each point <code>count</code> is the number of completed requests,
@@ -1017,7 +1161,7 @@ export function App() {
               <button
                 type="button"
                 className="export-button"
-                disabled={!result || !source || (mode === 'cumulative' && !afterSource)}
+                disabled={!result || !source || (isPaired(mode) && !afterSource)}
                 onClick={exportReport}
               >
                 Export explanatory JSON <span>↓</span>

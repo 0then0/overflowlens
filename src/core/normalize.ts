@@ -96,7 +96,7 @@ export function normalize(raw: unknown): ImportData {
                 if (type !== 'sum' && type !== 'histogram')
                   fail(
                     'UNSUPPORTED_TYPE',
-                    'Only monotonic integer Sum request counters and delta HTTP duration Histograms are supported.',
+                    'Only monotonic integer Sum request counters and explicit-bucket HTTP duration Histograms are supported.',
                     mp,
                     'UNSUPPORTED_INPUT',
                   );
@@ -125,9 +125,7 @@ export function normalize(raw: unknown): ImportData {
                     'There are no timestamped points to identify a complete interval. A timestamped zero counter is supported.',
                     mp,
                   );
-                // Only delta histograms are analyzed; others are refused by temporality.
-                const selected = type === 'histogram' && temporality !== 'DELTA' ? [] : points;
-                for (const [pi, pointRaw] of selected.entries()) {
+                for (const [pi, pointRaw] of points.entries()) {
                   const pp = `${mp}.${type}.dataPoints[${pi}]`,
                     point = object(pointRaw, pp);
                   if (point.startTimeUnixNano == null || point.timeUnixNano == null)

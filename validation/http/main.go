@@ -72,8 +72,19 @@ type manifest struct {
 	Instrumented string            `json:"instrumentation"`
 }
 
+// `go run ./http` regenerates the delta fixtures; `go run ./http cumulative`
+// regenerates the cumulative window fixtures (cumulative.go).
 func main() {
-	if err := run(); err != nil {
+	var err error
+	switch {
+	case len(os.Args) == 1:
+		err = run()
+	case len(os.Args) == 2 && os.Args[1] == "cumulative":
+		err = runCumulative()
+	default:
+		err = fmt.Errorf("usage: go run ./http [cumulative]")
+	}
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

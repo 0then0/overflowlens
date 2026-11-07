@@ -1,0 +1,2272 @@
+{
+  "resourceMetrics": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "overflowlens-http-cumulative-validation"
+            }
+          }
+        ]
+      },
+      "scopeMetrics": [
+        {
+          "scope": {
+            "name": "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp",
+            "version": "0.72.0"
+          },
+          "metrics": [
+            {
+              "name": "http.server.request.body.size",
+              "description": "Size of HTTP server request bodies.",
+              "unit": "By",
+              "histogram": {
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "404"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290323000",
+                    "timeUnixNano": "1794074311305627000",
+                    "count": "10",
+                    "sum": 0,
+                    "bucketCounts": [
+                      "10",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 0,
+                    "max": 0
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "otel.metric.overflow",
+                        "value": {
+                          "boolValue": true
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290323000",
+                    "timeUnixNano": "1794074311305627000",
+                    "count": "40",
+                    "sum": 0,
+                    "bucketCounts": [
+                      "40",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 0,
+                    "max": 0
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "200"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "beta"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290323000",
+                    "timeUnixNano": "1794074311305627000",
+                    "count": "20",
+                    "sum": 0,
+                    "bucketCounts": [
+                      "20",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 0,
+                    "max": 0
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "503"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290323000",
+                    "timeUnixNano": "1794074311305627000",
+                    "count": "3",
+                    "sum": 0,
+                    "bucketCounts": [
+                      "3",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 0,
+                    "max": 0
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "500"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290323000",
+                    "timeUnixNano": "1794074311305627000",
+                    "count": "6",
+                    "sum": 0,
+                    "bucketCounts": [
+                      "6",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 0,
+                    "max": 0
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "POST"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "502"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "beta"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290323000",
+                    "timeUnixNano": "1794074311305627000",
+                    "count": "2",
+                    "sum": 0,
+                    "bucketCounts": [
+                      "2",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 0,
+                    "max": 0
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "POST"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "201"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "beta"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290323000",
+                    "timeUnixNano": "1794074311305627000",
+                    "count": "15",
+                    "sum": 0,
+                    "bucketCounts": [
+                      "15",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 0,
+                    "max": 0
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "200"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290323000",
+                    "timeUnixNano": "1794074311305627000",
+                    "count": "120",
+                    "sum": 0,
+                    "bucketCounts": [
+                      "120",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 0,
+                    "max": 0
+                  }
+                ],
+                "aggregationTemporality": 2
+              }
+            },
+            {
+              "name": "http.server.response.body.size",
+              "description": "Size of HTTP server response bodies.",
+              "unit": "By",
+              "histogram": {
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "200"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290326000",
+                    "timeUnixNano": "1794074311305649000",
+                    "count": "120",
+                    "sum": 240,
+                    "bucketCounts": [
+                      "0",
+                      "120",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 2,
+                    "max": 2
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "POST"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "502"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "beta"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290326000",
+                    "timeUnixNano": "1794074311305649000",
+                    "count": "2",
+                    "sum": 4,
+                    "bucketCounts": [
+                      "0",
+                      "2",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 2,
+                    "max": 2
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "404"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290326000",
+                    "timeUnixNano": "1794074311305649000",
+                    "count": "10",
+                    "sum": 20,
+                    "bucketCounts": [
+                      "0",
+                      "10",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 2,
+                    "max": 2
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "200"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "beta"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290326000",
+                    "timeUnixNano": "1794074311305649000",
+                    "count": "20",
+                    "sum": 40,
+                    "bucketCounts": [
+                      "0",
+                      "20",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 2,
+                    "max": 2
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "503"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290326000",
+                    "timeUnixNano": "1794074311305649000",
+                    "count": "3",
+                    "sum": 6,
+                    "bucketCounts": [
+                      "0",
+                      "3",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 2,
+                    "max": 2
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "POST"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "201"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "beta"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290326000",
+                    "timeUnixNano": "1794074311305649000",
+                    "count": "15",
+                    "sum": 30,
+                    "bucketCounts": [
+                      "0",
+                      "15",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 2,
+                    "max": 2
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "500"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290326000",
+                    "timeUnixNano": "1794074311305649000",
+                    "count": "6",
+                    "sum": 12,
+                    "bucketCounts": [
+                      "0",
+                      "6",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 2,
+                    "max": 2
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "otel.metric.overflow",
+                        "value": {
+                          "boolValue": true
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290326000",
+                    "timeUnixNano": "1794074311305649000",
+                    "count": "40",
+                    "sum": 80,
+                    "bucketCounts": [
+                      "0",
+                      "40",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0,
+                      5,
+                      10,
+                      25,
+                      50,
+                      75,
+                      100,
+                      250,
+                      500,
+                      750,
+                      1000,
+                      2500,
+                      5000,
+                      7500,
+                      10000
+                    ],
+                    "min": 2,
+                    "max": 2
+                  }
+                ],
+                "aggregationTemporality": 2
+              }
+            },
+            {
+              "name": "http.server.request.duration",
+              "description": "Duration of HTTP server requests.",
+              "unit": "s",
+              "histogram": {
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "200"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290332000",
+                    "timeUnixNano": "1794074311305668000",
+                    "count": "120",
+                    "sum": 0.00037320899999999994,
+                    "bucketCounts": [
+                      "120",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0.005,
+                      0.01,
+                      0.025,
+                      0.05,
+                      0.075,
+                      0.1,
+                      0.25,
+                      0.5,
+                      0.75,
+                      1,
+                      2.5,
+                      5,
+                      7.5,
+                      10
+                    ],
+                    "min": 0.000001834,
+                    "max": 0.000017792
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "404"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290332000",
+                    "timeUnixNano": "1794074311305668000",
+                    "count": "10",
+                    "sum": 0.000025126000000000003,
+                    "bucketCounts": [
+                      "10",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0.005,
+                      0.01,
+                      0.025,
+                      0.05,
+                      0.075,
+                      0.1,
+                      0.25,
+                      0.5,
+                      0.75,
+                      1,
+                      2.5,
+                      5,
+                      7.5,
+                      10
+                    ],
+                    "min": 0.000001833,
+                    "max": 0.000004875
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "POST"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "502"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "beta"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290332000",
+                    "timeUnixNano": "1794074311305668000",
+                    "count": "2",
+                    "sum": 0.000007083,
+                    "bucketCounts": [
+                      "2",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0.005,
+                      0.01,
+                      0.025,
+                      0.05,
+                      0.075,
+                      0.1,
+                      0.25,
+                      0.5,
+                      0.75,
+                      1,
+                      2.5,
+                      5,
+                      7.5,
+                      10
+                    ],
+                    "min": 0.000002417,
+                    "max": 0.000004666
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "otel.metric.overflow",
+                        "value": {
+                          "boolValue": true
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290332000",
+                    "timeUnixNano": "1794074311305668000",
+                    "count": "40",
+                    "sum": 0.00013583500000000003,
+                    "bucketCounts": [
+                      "40",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0.005,
+                      0.01,
+                      0.025,
+                      0.05,
+                      0.075,
+                      0.1,
+                      0.25,
+                      0.5,
+                      0.75,
+                      1,
+                      2.5,
+                      5,
+                      7.5,
+                      10
+                    ],
+                    "min": 0.000001958,
+                    "max": 0.000013334
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "500"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290332000",
+                    "timeUnixNano": "1794074311305668000",
+                    "count": "6",
+                    "sum": 0.000018501,
+                    "bucketCounts": [
+                      "6",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0.005,
+                      0.01,
+                      0.025,
+                      0.05,
+                      0.075,
+                      0.1,
+                      0.25,
+                      0.5,
+                      0.75,
+                      1,
+                      2.5,
+                      5,
+                      7.5,
+                      10
+                    ],
+                    "min": 0.00000225,
+                    "max": 0.000005292
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "503"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "alpha"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290332000",
+                    "timeUnixNano": "1794074311305668000",
+                    "count": "3",
+                    "sum": 0.000007167,
+                    "bucketCounts": [
+                      "3",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0.005,
+                      0.01,
+                      0.025,
+                      0.05,
+                      0.075,
+                      0.1,
+                      0.25,
+                      0.5,
+                      0.75,
+                      1,
+                      2.5,
+                      5,
+                      7.5,
+                      10
+                    ],
+                    "min": 0.000001875,
+                    "max": 0.00000325
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "POST"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "201"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "beta"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290332000",
+                    "timeUnixNano": "1794074311305668000",
+                    "count": "15",
+                    "sum": 0.000048584999999999996,
+                    "bucketCounts": [
+                      "15",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0.005,
+                      0.01,
+                      0.025,
+                      0.05,
+                      0.075,
+                      0.1,
+                      0.25,
+                      0.5,
+                      0.75,
+                      1,
+                      2.5,
+                      5,
+                      7.5,
+                      10
+                    ],
+                    "min": 0.000001959,
+                    "max": 0.000005167
+                  },
+                  {
+                    "attributes": [
+                      {
+                        "key": "http.request.method",
+                        "value": {
+                          "stringValue": "GET"
+                        }
+                      },
+                      {
+                        "key": "http.response.status_code",
+                        "value": {
+                          "intValue": "200"
+                        }
+                      },
+                      {
+                        "key": "http.route",
+                        "value": {
+                          "stringValue": "/"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.name",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      },
+                      {
+                        "key": "network.protocol.version",
+                        "value": {
+                          "stringValue": "1.1"
+                        }
+                      },
+                      {
+                        "key": "server.address",
+                        "value": {
+                          "stringValue": "127.0.0.1"
+                        }
+                      },
+                      {
+                        "key": "server.port",
+                        "value": {
+                          "intValue": "54446"
+                        }
+                      },
+                      {
+                        "key": "test.client",
+                        "value": {
+                          "stringValue": "beta"
+                        }
+                      },
+                      {
+                        "key": "url.scheme",
+                        "value": {
+                          "stringValue": "http"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano": "1794074311290332000",
+                    "timeUnixNano": "1794074311305668000",
+                    "count": "20",
+                    "sum": 0.000061416,
+                    "bucketCounts": [
+                      "20",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds": [
+                      0.005,
+                      0.01,
+                      0.025,
+                      0.05,
+                      0.075,
+                      0.1,
+                      0.25,
+                      0.5,
+                      0.75,
+                      1,
+                      2.5,
+                      5,
+                      7.5,
+                      10
+                    ],
+                    "min": 0.000002208,
+                    "max": 0.000006
+                  }
+                ],
+                "aggregationTemporality": 2
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

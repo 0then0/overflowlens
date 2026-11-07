@@ -1,7 +1,17 @@
 import { readPoint } from './analyze';
 import { calculate, thresholdPercent } from './calculate';
 import { canonical, integer } from './parse';
-import { type Analysis, type Counts, diagnostic, fail, OVERFLOW, type Stream } from './types';
+import {
+  type Analysis,
+  type Attributes,
+  type Counts,
+  diagnostic,
+  fail,
+  type Identity,
+  type ObjectValue,
+  OVERFLOW,
+  type Stream,
+} from './types';
 
 export type CumulativeSettings = {
   beforeSnapshotId: string;
@@ -11,15 +21,22 @@ export type CumulativeSettings = {
   threshold: string;
   contractConfirmed: boolean;
 };
-export type MatchedPoint = ReturnType<typeof readPoint> & {
+// One counted point. The HTTP histogram window adds the status classification.
+export type PointRead = {
+  attributes: Attributes;
+  count: string;
+  overflow: boolean;
+  statusCode?: string;
+  responseClass?: 'server_error' | 'other';
+};
+export type MatchedPoint = PointRead & {
   startTimeUnixNano: string;
   beforeCount: string;
   afterCount: string;
 };
-export type CumulativeSelection = Pick<
-  CumulativeSettings,
-  'beforeSnapshotId' | 'afterSnapshotId' | 'outcomeAttribute' | 'errorValue'
->;
+export type WindowBoundaries = Pick<CumulativeSettings, 'beforeSnapshotId' | 'afterSnapshotId'>;
+export type CumulativeSelection = WindowBoundaries &
+  Pick<CumulativeSettings, 'outcomeAttribute' | 'errorValue'>;
 export type PairEvidence = {
   window: { startTimeUnixNano: string; timeUnixNano: string };
   checks: string[];
@@ -35,11 +52,26 @@ export type CumulativeAnalysis =
       evidence: PairEvidence;
     });
 
-// This is a saved-snapshot applicability check, not a general temporality converter.
-export function pairCumulative(
+// What differs between cumulative windows of different metrics. Everything else
+// (identity, boundaries, series matching, continuity, exact increments) is shared.
+export type WindowProfile<X = undefined> = {
+  checks: string[];
+  // Refuses a stream that is not the supported cumulative definition.
+  stream(identity: Identity, side: string): void;
+  // Refuses an unusable classification choice before any point is read.
+  selection(): void;
+  // Wire validation and classification of one raw point; `evidence` is kept per series.
+  read(raw: ObjectValue, path: string): { point: PointRead; evidence: X };
+  isError(point: PointRead): boolean;
+  // Extra per-series evidence that the two points belong to one continuous history.
+  continuity(before: X, after: X, path: string): void;
+};
+
+export function pairWindow<X>(
   before: Stream,
   after: Stream,
-  settings: CumulativeSelection,
+  boundaries: WindowBoundaries,
+  profile: WindowProfile<X>,
 ): Pairing {
   try {
     for (const [side, stream] of [
@@ -50,17 +82,7 @@ export function pairCumulative(
         const d = stream.diagnostics[0];
         return { status: d.status, diagnostic: { ...d, path: `${side}.${d.path ?? 'stream'}` } };
       }
-      if (
-        stream.identity.type !== 'sum' ||
-        !stream.identity.monotonic ||
-        stream.identity.temporality !== 'CUMULATIVE'
-      )
-        fail(
-          'UNSUPPORTED_TEMPORALITY',
-          'Cumulative mode requires two monotonic cumulative Sum streams.',
-          side,
-          'UNSUPPORTED_INPUT',
-        );
+      profile.stream(stream.identity, side);
       if (stream.snapshots.length !== 1)
         fail(
           'INCONSISTENT_TIMESTAMPS',
@@ -76,8 +98,8 @@ export function pairCumulative(
         'pair.identity',
         'UNSUPPORTED_INPUT',
       );
-    const b = before.snapshots.find((s) => s.id === settings.beforeSnapshotId);
-    const a = after.snapshots.find((s) => s.id === settings.afterSnapshotId);
+    const b = before.snapshots.find((s) => s.id === boundaries.beforeSnapshotId);
+    const a = after.snapshots.find((s) => s.id === boundaries.afterSnapshotId);
     if (!b || !a)
       fail(
         'SNAPSHOT_NOT_SELECTED',
@@ -94,17 +116,13 @@ export function pairCumulative(
         'pair.window',
         'UNSUPPORTED_INPUT',
       );
-    if (!settings.outcomeAttribute || settings.outcomeAttribute === OVERFLOW)
-      fail(
-        'INVALID_OUTCOME_ATTRIBUTE',
-        'Choose a boolean measurement outcome attribute other than the overflow marker.',
-      );
+    profile.selection();
     const index = (snapshot: typeof b, side: string) => {
-      const map = new Map<string, { point: MatchedPoint; start: bigint }>();
+      const map = new Map<string, { point: PointRead; evidence: X; start: bigint }>();
       for (const [i, raw] of snapshot.points.entries()) {
         const path = `${side}.points[${i}]`;
-        const p = readPoint(raw, settings.outcomeAttribute, path);
-        const key = canonical(p.attributes);
+        const { point, evidence } = profile.read(raw, path);
+        const key = canonical(point.attributes);
         if (map.has(key))
           fail(
             'DUPLICATE_POINT',
@@ -122,10 +140,7 @@ export function pairCumulative(
             path,
             'UNSUPPORTED_INPUT',
           );
-        map.set(key, {
-          start: t,
-          point: { ...p, startTimeUnixNano: t.toString(), beforeCount: '', afterCount: '' },
-        });
+        map.set(key, { start: t, evidence, point });
       }
       if (!map.size) fail('MISSING_INTERVAL', 'A snapshot must contain timestamped points.', side);
       return map;
@@ -148,18 +163,19 @@ export function pairCumulative(
       const bp = bm.get(key),
         ap = am.get(key);
       if (!bp || !ap) throw new Error('Missing matched point');
+      const path = `pair.attributes.${key}`;
       if (bp.start !== ap.start)
         fail(
           'CHANGED_START_TIME',
           `Matched series changed start time from ${bp.start} to ${ap.start}; continuity is not established.`,
-          `pair.attributes.${key}`,
+          path,
           'UNSUPPORTED_INPUT',
         );
       if (bp.start >= start)
         fail(
           'INVALID_SERIES_START',
           'A matched series must start before the window.',
-          `pair.attributes.${key}`,
+          path,
           'UNSUPPORTED_INPUT',
         );
       const increment = BigInt(ap.point.count) - BigInt(bp.point.count);
@@ -167,11 +183,13 @@ export function pairCumulative(
         fail(
           'DECREASING_POINT',
           `Matched counter decreased from ${bp.point.count} to ${ap.point.count}.`,
-          `pair.attributes.${key}`,
+          path,
           'UNSUPPORTED_INPUT',
         );
+      profile.continuity(bp.evidence, ap.evidence, path);
       points.push({
         ...bp.point,
+        startTimeUnixNano: bp.start.toString(),
         beforeCount: bp.point.count,
         afterCount: ap.point.count,
         count: increment.toString(),
@@ -179,22 +197,14 @@ export function pairCumulative(
       if (bp.point.overflow) O += increment;
       else {
         K += increment;
-        if (bp.point.attributes[settings.outcomeAttribute] === settings.errorValue) E += increment;
+        if (profile.isError(bp.point)) E += increment;
       }
     }
     return {
       status: 'APPLICABLE',
       evidence: {
         window: { startTimeUnixNano: start.toString(), timeUnixNano: end.toString() },
-        checks: [
-          'identical stream definition',
-          'one collection timestamp per export',
-          'strictly ordered collection timestamps',
-          'equal unique measurement identity sets',
-          'known unchanged per-series start times before window',
-          'nondecreasing integer counts per point',
-          'valid flags, boolean outcomes and SDK overflow shape',
-        ],
+        checks: profile.checks,
         points,
         counts: { K, E, O, T: K + O },
       },
@@ -205,28 +215,16 @@ export function pairCumulative(
   }
 }
 
-export function analyzeCumulative(
-  before: Stream,
-  after: Stream,
-  settings: CumulativeSettings,
-): CumulativeAnalysis {
-  return calculateCumulative(pairCumulative(before, after, settings), settings);
-}
-
 // Reuse a validated selection when only the threshold or provenance confirmation changes.
-export function calculateCumulative(
+export function calculateWindow(
   pair: Pairing,
   settings: Pick<CumulativeSettings, 'threshold' | 'contractConfirmed'>,
+  unconfirmed: string,
 ): CumulativeAnalysis {
   if (pair.status !== 'APPLICABLE') return pair;
   try {
     if (!settings.contractConfirmed)
-      fail(
-        'PROVENANCE_NOT_CONFIRMED',
-        'Confirm both complete SDK exports, continuous source history, stable attribution and one boolean outcome per request. Structure cannot prove these assumptions.',
-        undefined,
-        'UNSUPPORTED_INPUT',
-      );
+      fail('PROVENANCE_NOT_CONFIRMED', unconfirmed, undefined, 'UNSUPPORTED_INPUT');
     const { K, E, O } = pair.evidence.counts;
     return {
       ...calculate(K, E, O, thresholdPercent(settings.threshold)),
@@ -237,4 +235,68 @@ export function calculateCumulative(
     const d = diagnostic(error);
     return { status: d.status, diagnostic: d };
   }
+}
+
+function sumProfile(settings: CumulativeSelection): WindowProfile {
+  return {
+    checks: [
+      'identical stream definition',
+      'one collection timestamp per export',
+      'strictly ordered collection timestamps',
+      'equal unique measurement identity sets',
+      'known unchanged per-series start times before window',
+      'nondecreasing integer counts per point',
+      'valid flags, boolean outcomes and SDK overflow shape',
+    ],
+    stream(identity, side) {
+      if (identity.type !== 'sum' || !identity.monotonic || identity.temporality !== 'CUMULATIVE')
+        fail(
+          'UNSUPPORTED_TEMPORALITY',
+          'Cumulative mode requires two monotonic cumulative Sum streams.',
+          side,
+          'UNSUPPORTED_INPUT',
+        );
+    },
+    selection() {
+      if (!settings.outcomeAttribute || settings.outcomeAttribute === OVERFLOW)
+        fail(
+          'INVALID_OUTCOME_ATTRIBUTE',
+          'Choose a boolean measurement outcome attribute other than the overflow marker.',
+        );
+    },
+    read: (raw, path) => ({
+      point: readPoint(raw, settings.outcomeAttribute, path),
+      evidence: undefined,
+    }),
+    isError: (point) => point.attributes[settings.outcomeAttribute] === settings.errorValue,
+    continuity() {},
+  };
+}
+
+// This is a saved-snapshot applicability check, not a general temporality converter.
+export function pairCumulative(
+  before: Stream,
+  after: Stream,
+  settings: CumulativeSelection,
+): Pairing {
+  return pairWindow(before, after, settings, sumProfile(settings));
+}
+
+export function analyzeCumulative(
+  before: Stream,
+  after: Stream,
+  settings: CumulativeSettings,
+): CumulativeAnalysis {
+  return calculateCumulative(pairCumulative(before, after, settings), settings);
+}
+
+export function calculateCumulative(
+  pair: Pairing,
+  settings: Pick<CumulativeSettings, 'threshold' | 'contractConfirmed'>,
+): CumulativeAnalysis {
+  return calculateWindow(
+    pair,
+    settings,
+    'Confirm both complete SDK exports, continuous source history, stable attribution and one boolean outcome per request. Structure cannot prove these assumptions.',
+  );
 }

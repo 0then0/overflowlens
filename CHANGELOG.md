@@ -4,6 +4,9 @@ This file summarizes user-visible changes. Detailed compatibility and launch ins
 
 ## Unreleased
 
+- Add a cumulative window mode for HTTP 5xx: two cumulative `http.server.request.duration` exports are paired, per-series `count` increments are classified by `http.response.status_code`, and the same exact bounds apply. The pair requires identical streams and series, unchanged start times, nondecreasing counts and an unchanged bucket layout, and refuses resets and SDK restarts. Reports use schema v4. Sum modes, delta HTTP mode and their reports are unchanged.
+- Validate it with real OpenTelemetry Go `otelhttp` exports under the SDK's default cumulative temporality and a cardinality limit of 8 (`npm run validate:http-cumulative`), including a restart refusal and a zero window.
+- Import cumulative histograms as snapshots, validating every point with the delta histogram rules. The delta HTTP mode still refuses them by temporality.
 - Prepare GitHub Pages distribution of v0.2.1 through an explicit, verified source commit, preserving downloadable archives and relative assets. The browser distribution is published on GitHub Pages.
 - Bundle the synthetic SDK cumulative before/after example, show the exact application version and clarify local data processing.
 - Exercise production assets and the Worker under `/overflowlens/`, including imports, report export, privacy, mobile and system themes.

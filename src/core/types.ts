@@ -79,6 +79,8 @@ export const CUMULATIVE_CONTRACT =
   'Both snapshots are complete SDK exports of the selected synchronous request counter from one continuous source history, with no resets or changes to counts or attribution by downstream transformations. Every request has one boolean outcome. The selected overflow marker has genuine SDK overflow semantics, with stable ordinary attribution across collections.';
 export const HTTP_METRIC = 'http.server.request.duration';
 export const HTTP_STATUS_ATTRIBUTE = 'http.response.status_code';
+export const HTTP_CUMULATIVE_CONTRACT =
+  'Both snapshots are complete cumulative SDK exports of the selected http.server.request.duration explicit-bucket Histogram from one continuous source history, with no resets. Every histogram observation is one completed HTTP request, ordinary points retain the correct http.response.status_code, and downstream processing changed neither counts nor attribution. The selected overflow marker has genuine SDK overflow semantics, with stable ordinary attribution across collections.';
 export const HTTP_CRITERION = 'HTTP 5xx';
 export const HTTP_CONTRACT =
   'This is a complete delta export of the selected interval from an SDK http.server.request.duration explicit-bucket Histogram, before transformations that change values or measurement attributes. Every histogram observation is one completed HTTP request, ordinary points retain the correct http.response.status_code, and downstream processing changed neither counts nor attribution. The selected overflow marker has genuine SDK overflow semantics.';

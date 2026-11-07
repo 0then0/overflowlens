@@ -344,13 +344,25 @@ describe('metric scope', () => {
       diagnostic: { code: 'UNSUPPORTED_METRIC' },
     });
   });
-  test('cumulative histograms are refused without reading their points', () => {
+  test('a cumulative histogram imports as snapshots and is refused by interval mode', () => {
+    const raw = httpFixture([{ status: 200 }]);
+    raw.resourceMetrics[0].scopeMetrics[0].metrics[0].histogram.aggregationTemporality = 2;
+    const s = importFixture(raw).streams[0];
+    expect(s.diagnostics).toEqual([]);
+    expect(s.intervals).toEqual([]);
+    expect(s.snapshots).toHaveLength(1);
+    expect(runHttp(s)).toMatchObject({
+      status: 'UNSUPPORTED_INPUT',
+      diagnostic: { code: 'UNSUPPORTED_TEMPORALITY' },
+    });
+  });
+  test('a corrupt cumulative histogram point blocks its stream at import', () => {
     const raw = httpFixture([{ status: 200 }], {
       histogram: { aggregationTemporality: 2, dataPoints: [{ count: 'garbage' }] },
     });
-    const s = importFixture(raw).streams[0];
-    expect(s.diagnostics).toEqual([]);
-    expect(runHttp(s)).toMatchObject({ diagnostic: { code: 'UNSUPPORTED_TEMPORALITY' } });
+    expect(importFixture(raw).streams[0].diagnostics).toMatchObject([
+      { code: 'MISSING_TIMESTAMP' },
+    ]);
   });
   test('exponential histograms are unsupported', () => {
     const raw = httpFixture([{ status: 200 }]);

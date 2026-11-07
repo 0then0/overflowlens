@@ -911,3 +911,15 @@ footer {
 .selection {
   margin: 0 0 16px;
 }
+
+.checks {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  color: var(--color-fog-text);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.checks li {
+  overflow-wrap: anywhere;
+}

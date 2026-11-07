@@ -163,3 +163,119 @@ export function runHttp(stream: Stream, overrides: Partial<HttpSettings> = {}) {
     ...overrides,
   });
 }
+
+export type CumulativePoint = {
+  attributes: { key: string; value: unknown }[];
+  startTimeUnixNano?: string;
+  timeUnixNano: string;
+  count?: string | number;
+  sum: number;
+  bucketCounts: string[];
+  explicitBounds: number[];
+  [field: string]: unknown;
+};
+export type CumulativePointSpec = {
+  // Stable measurement identity across both exports; stored as the `test.id` attribute.
+  id: string;
+  status?: number | string | boolean | null;
+  overflow?: boolean;
+  count: string | number;
+  start?: string;
+  attributes?: unknown[];
+  point?: Record<string, unknown>;
+};
+// Cumulative explicit-bucket http.server.request.duration export with one collection timestamp.
+export function httpCumulativeFixture(
+  specs: CumulativePointSpec[],
+  end = '2000000000',
+  metric: Record<string, unknown> = {},
+) {
+  const dataPoints: CumulativePoint[] = specs.map((spec) => {
+    const attributes: { key: string; value: unknown }[] = spec.overflow
+      ? [{ key: 'otel.metric.overflow', value: { boolValue: true } }]
+      : [{ key: 'test.id', value: { stringValue: spec.id } }];
+    if (!spec.overflow && spec.status !== null && spec.status !== undefined)
+      attributes.push({
+        key: 'http.response.status_code',
+        value:
+          typeof spec.status === 'string'
+            ? { stringValue: spec.status }
+            : typeof spec.status === 'boolean'
+              ? { boolValue: spec.status }
+              : { intValue: String(spec.status) },
+      });
+    attributes.push(...((spec.attributes ?? []) as { key: string; value: unknown }[]));
+    return {
+      attributes,
+      startTimeUnixNano: spec.start ?? '1000000000',
+      timeUnixNano: end,
+      count: spec.count,
+      sum: Number(spec.count) === 0 ? 0 : 0.5,
+      bucketCounts: [String(spec.count), '0'],
+      explicitBounds: [1],
+      ...spec.point,
+    };
+  });
+  return {
+    resourceMetrics: [
+      {
+        resource: { attributes: [{ key: 'service.name', value: { stringValue: 'test' } }] },
+        scopeMetrics: [
+          {
+            scope: { name: 'test', version: '1' },
+            metrics: [
+              {
+                name: 'http.server.request.duration',
+                description: 'duration',
+                unit: 's',
+                histogram: { aggregationTemporality: 2, dataPoints },
+                ...metric,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
+// Synthetic complete cumulative HTTP snapshots near the import budget: every series
+// is an ordinary 200 point, and every hundredth is a 500 point with exactly 1% window 5xx.
+export function largeHttpCumulativeWindow(points = 19000) {
+  const snapshot = (end: string, count: string) =>
+    JSON.stringify({
+      resourceMetrics: [
+        {
+          scopeMetrics: [
+            {
+              metrics: [
+                {
+                  name: 'http.server.request.duration',
+                  unit: 's',
+                  histogram: {
+                    aggregationTemporality: 2,
+                    dataPoints: Array.from({ length: points }, (_, i) => ({
+                      attributes: [
+                        {
+                          key: 'http.response.status_code',
+                          value: { intValue: i % 100 === 0 ? '500' : '200' },
+                        },
+                        { key: 'id', value: { intValue: String(i) } },
+                      ],
+                      startTimeUnixNano: '1000000000',
+                      timeUnixNano: end,
+                      count,
+                      sum: 0.5,
+                      bucketCounts: [count, '0'],
+                      explicitBounds: [1],
+                    })),
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  return { before: snapshot('2000000000', '100'), after: snapshot('3000000000', '101') };
+}

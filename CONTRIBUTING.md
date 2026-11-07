@@ -61,6 +61,8 @@ The Collector lab needs Docker and is separate from every other check. `npm run 
 
 `validate:http` serves a deterministic workload through real otelhttp instrumentation, rewrites `fixtures/http/` and checks the exports (see [SDK validation](docs/validation.md#http-5xx-histogram-validation)).
 
+`validate:http-cumulative` runs the cumulative otelhttp experiment, rewrites the `http-cumulative-*.json` files and `cumulative-manifest.json` in `fixtures/http/` and checks them (see [SDK validation](docs/validation.md#cumulative-http-5xx-window-validation)). It does not touch the delta fixtures.
+
 `validate:sdk` rewrites SDK fixtures. Run it separately from tests that read those files. Review those changes as captured exports, preserving their bytes. See [SDK validation](docs/validation.md) for expected results and the distinction between real exports and synthetic controls.
 
 ## Dependency updates

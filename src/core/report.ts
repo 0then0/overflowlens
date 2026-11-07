@@ -1,6 +1,7 @@
 import type { Settings } from './analyze';
-import { type CumulativeSettings, pairCumulative } from './cumulative';
+import { type CumulativeSettings, type MatchedPoint, pairCumulative } from './cumulative';
 import type { HttpSettings } from './http';
+import { type HttpCumulativeSettings, pairHttpCumulative } from './httpCumulative';
 import { canonical } from './parse';
 import {
   type Analysis,
@@ -8,6 +9,7 @@ import {
   CUMULATIVE_CONTRACT,
   HTTP_CONTRACT,
   HTTP_CRITERION,
+  HTTP_CUMULATIVE_CONTRACT,
   HTTP_METRIC,
   HTTP_STATUS_ATTRIBUTE,
   type Stream,
@@ -211,6 +213,141 @@ export function makeHttpReport(
       ],
     },
     (_key, value: unknown) => (typeof value === 'bigint' ? value.toString() : value),
+    2,
+  );
+}
+
+export const HTTP_CUMULATIVE_CONDITIONS = [
+  'Both exports are complete and come from one continuous source history; no reset occurred inside the window.',
+  'Each histogram observation corresponds to one completed HTTP request.',
+  'Ordinary points retain the correct http.response.status_code.',
+  'Downstream processing changed neither counts nor attribution.',
+  'The overflow marker has genuine SDK overflow semantics, with stable ordinary attribution across collections.',
+];
+
+// Schema v4: the cumulative HTTP 5xx window. Schemas v1 to v3 are unchanged.
+export function makeHttpCumulativeReport(
+  before: Stream,
+  after: Stream,
+  settings: HttpCumulativeSettings,
+  result: Analysis,
+  sources: { before: Source; after: Source },
+) {
+  const pair = pairHttpCumulative(before, after, settings);
+  const b = before.snapshots.find((s) => s.id === settings.beforeSnapshotId);
+  const a = after.snapshots.find((s) => s.id === settings.afterSnapshotId);
+  const sum = (key: 'beforeCount' | 'afterCount' | 'count', pick: (p: MatchedPoint) => boolean) =>
+    pair.status === 'APPLICABLE'
+      ? pair.evidence.points
+          .filter(pick)
+          .reduce((n, p) => n + BigInt(p[key]), 0n)
+          .toString()
+      : null;
+  const boundary = (key: 'beforeCount' | 'afterCount' | 'count') => ({
+    knownRequests: sum(key, (p) => !p.overflow),
+    knownServerErrors: sum(key, (p) => p.responseClass === 'server_error'),
+    overflow: sum(key, (p) => p.overflow),
+    total: sum(key, () => true),
+  });
+  const plain = (value: unknown) =>
+    JSON.parse(
+      JSON.stringify(value, (_key, v: unknown) => (typeof v === 'bigint' ? v.toString() : v)),
+    );
+  // Canonicalize key order as well as matched-point order for repeatable evidence.
+  return JSON.stringify(
+    JSON.parse(
+      canonical({
+        reportVersion: '4',
+        application: { name: 'OverflowLens', version: '0.3.0' },
+        mode: 'http-5xx-histogram-cumulative',
+        sources,
+        identity: before.identity,
+        selectedInputs: {
+          before: {
+            identity: before.identity,
+            snapshotId: settings.beforeSnapshotId,
+            timeUnixNano: b?.end ?? null,
+          },
+          after: {
+            identity: after.identity,
+            snapshotId: settings.afterSnapshotId,
+            timeUnixNano: a?.end ?? null,
+          },
+        },
+        inputMetric: {
+          name: before.identity.name,
+          type: 'Histogram',
+          buckets: 'explicit',
+          temporality: before.identity.temporality,
+          unit: before.identity.unit,
+          expectedName: HTTP_METRIC,
+          countMeaning: 'count of each datapoint is the number of completed HTTP requests',
+          usedFields: 'count, attributes, startTimeUnixNano, timeUnixNano',
+          notUsed: 'sum, min, max, exemplars and bucket contents are validated but never estimated',
+        },
+        classification: {
+          criterion: HTTP_CRITERION,
+          attribute: HTTP_STATUS_ATTRIBUTE,
+          errorStatusCodes: '500-599',
+          otherStatusCodes: '100-499',
+          ordinaryPoints: 'integer status code required; missing, invalid or contradictory refuses',
+          overflowPoints: 'exactly one attribute, otel.metric.overflow = true; counted separately',
+        },
+        window: b && a ? { startTimeUnixNano: b.end, timeUnixNano: a.end } : null,
+        settings,
+        assumptions: {
+          contract: HTTP_CUMULATIVE_CONTRACT,
+          userConfirmed: settings.contractConfirmed,
+          conditions: HTTP_CUMULATIVE_CONDITIONS,
+          nameMatchProvesConditions: false,
+          structurallyProven: false,
+        },
+        applicability:
+          pair.status === 'APPLICABLE'
+            ? {
+                status: pair.status,
+                checks: pair.evidence.checks,
+                matchedPointCount: pair.evidence.points.length,
+              }
+            : plain(pair),
+        // Counts accompany a verdict only; an unconfirmed or invalid request exports none.
+        counts:
+          pair.status === 'APPLICABLE' && 'K' in result
+            ? {
+                atBeforeBoundary: boundary('beforeCount'),
+                atAfterBoundary: boundary('afterCount'),
+                window: boundary('count'),
+              }
+            : null,
+        model: {
+          increment: 'count(after) - count(before), for each matched point',
+          K: 'sum of increments over ordinary points',
+          E: 'sum of increments over ordinary points with status code 500-599',
+          O: 'sum of increments over the SDK overflow point',
+          T: 'K + O',
+          lower: 'E / T',
+          upper: '(E + O) / T',
+          within: 'upper <= threshold',
+          exceeds: 'lower > threshold',
+          equalityAllowed: true,
+        },
+        result: plain({ ...result, evidence: undefined }),
+        witnesses:
+          'K' in result && result.T > 0n
+            ? {
+                lower: { overflowServerErrors: '0', overflowOtherResponses: result.O.toString() },
+                upper: { overflowServerErrors: result.O.toString(), overflowOtherResponses: '0' },
+              }
+            : null,
+        limitations: [
+          'One saved cumulative window of explicit-bucket counts, identical measurement identities only; no reset handling.',
+          'Hashes identify bytes, not authenticity, completeness or continuous source history.',
+          'Latency, routes and bucket contents are not analyzed. Bounds describe possible allocations, not a confidence interval.',
+          'Endpoint witnesses allocate window overflow increments; exemplars cannot recover all statuses.',
+        ],
+      }),
+    ),
+    null,
     2,
   );
 }
