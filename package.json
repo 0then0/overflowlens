@@ -1,6 +1,6 @@
 {
   "name": "overflowlens",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Exact error-rate bounds after OpenTelemetry SDK cardinality overflow",
