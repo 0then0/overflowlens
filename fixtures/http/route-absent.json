@@ -1,0 +1,213 @@
+{
+  "resourceMetrics":  [
+    {
+      "resource":  {
+        "attributes":  [
+          {
+            "key":  "service.name",
+            "value":  {
+              "stringValue":  "overflowlens-route-validation"
+            }
+          }
+        ]
+      },
+      "scopeMetrics":  [
+        {
+          "scope":  {
+            "name":  "overflowlens.http.route.validation"
+          },
+          "metrics":  [
+            {
+              "name":  "http.server.request.duration",
+              "unit":  "s",
+              "histogram":  {
+                "dataPoints":  [
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/search"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794129627477280000",
+                    "timeUnixNano":  "1794129627477596000",
+                    "count":  "75",
+                    "sum":  29.49999999999999,
+                    "bucketCounts":  [
+                      "0",
+                      "60",
+                      "10",
+                      "0",
+                      "5",
+                      "0"
+                    ],
+                    "explicitBounds":  [
+                      0.1,
+                      0.25,
+                      0.5,
+                      1,
+                      2.5
+                    ],
+                    "min":  0.2,
+                    "max":  2.5
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "otel.metric.overflow",
+                        "value":  {
+                          "boolValue":  true
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794129627477280000",
+                    "timeUnixNano":  "1794129627477596000",
+                    "count":  "595",
+                    "sum":  160.3,
+                    "bucketCounts":  [
+                      "280",
+                      "214",
+                      "60",
+                      "12",
+                      "15",
+                      "14"
+                    ],
+                    "explicitBounds":  [
+                      0.1,
+                      0.25,
+                      0.5,
+                      1,
+                      2.5
+                    ],
+                    "min":  0.05,
+                    "max":  3
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/health"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794129627477280000",
+                    "timeUnixNano":  "1794129627477596000",
+                    "count":  "30",
+                    "sum":  1.5000000000000007,
+                    "bucketCounts":  [
+                      "30",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds":  [
+                      0.1,
+                      0.25,
+                      0.5,
+                      1,
+                      2.5
+                    ],
+                    "min":  0.05,
+                    "max":  0.05
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/static"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794129627477280000",
+                    "timeUnixNano":  "1794129627477596000",
+                    "count":  "40",
+                    "sum":  2.000000000000001,
+                    "bucketCounts":  [
+                      "40",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0"
+                    ],
+                    "explicitBounds":  [
+                      0.1,
+                      0.25,
+                      0.5,
+                      1,
+                      2.5
+                    ],
+                    "min":  0.05,
+                    "max":  0.05
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/cart"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794129627477280000",
+                    "timeUnixNano":  "1794129627477596000",
+                    "count":  "120",
+                    "sum":  34.999999999999986,
+                    "bucketCounts":  [
+                      "100",
+                      "0",
+                      "0",
+                      "0",
+                      "20",
+                      "0"
+                    ],
+                    "explicitBounds":  [
+                      0.1,
+                      0.25,
+                      0.5,
+                      1,
+                      2.5
+                    ],
+                    "min":  0.05,
+                    "max":  1.5
+                  }
+                ],
+                "aggregationTemporality":  1
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

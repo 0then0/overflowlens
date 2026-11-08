@@ -105,6 +105,20 @@ Each increment is `afterCount − beforeCount` as `BigInt`. K, E and O are sums 
 
 Structural applicability is checked before the provenance confirmation, which states complete exports from one continuous source history with no resets, one completed request per observation, correct status codes, unchanged counts and attribution downstream, and genuine SDK overflow semantics. Pairing and aggregation are reused while only the threshold or confirmation changes. A file, stream or boundary change clears the confirmation and the result. Reports use schema v4.
 
+## Route slow share
+
+The fifth mode, **HTTP route slow share (delta)**, bounds the share of requests of one exact `http.route` that took longer than a chosen duration, after SDK overflow. It analyzes one complete delta interval of one Resource/scope/metric stream: `http.server.request.duration`, an explicit-bucket `Histogram`, `aggregationTemporality: 1`, with unit exactly `s`. Another unit (`ms`, none) is refused with `UNSUPPORTED_UNIT`; values are never converted. Cumulative histograms, exponential histograms and other metrics are refused. Histogram points are validated by the rules of the [HTTP 5xx histogram](#http-5xx-histogram) mode (flags, `count`, buckets, `sum`, `min`, `max`), and every point of the selected stream is validated before the route is considered.
+
+- **Overflow** follows the strict shape in [SDK overflow](#sdk-overflow-and-provenance): one attribute, `otel.metric.overflow = true`. Its observations are split by the duration boundary into `F` (not slower) and `S` (slower).
+- **Ordinary points** that are non-empty need exactly one `http.route` `stringValue`, nonempty. A missing, non-string or empty route refuses the whole calculation (`MISSING_ROUTE`, `INVALID_ROUTE`), even on a point of another route, because that point could belong to the selected route. The route is matched as an exact string; it is never derived from a URL, an endpoint name or another attribute. An empty ordinary point does not need a route. `http.response.status_code` is not required or used.
+- **Buckets** must be complete on every non-empty point (`MISSING_BUCKETS`). A missing distribution is never reconstructed from `sum`, `min`, `max` or exemplars.
+- **Duration threshold** is a finite positive number of seconds that is exactly one of the `explicitBounds` of every non-empty overflow point and of every non-empty point of the selected route (`THRESHOLD_NOT_A_BOUNDARY`). It is never interpolated or rounded to a neighboring boundary. Points of other routes do not take part in the split, so their layouts do not matter. The interface offers the boundaries common to those points, in seconds (for example `0.5 s (500 ms)`); the milliseconds are display only, and the selected value is always the seconds token.
+- **Slow** means strictly greater than the threshold. An observation equal to the threshold lies in the bucket whose upper bound it is (OTLP upper bounds are inclusive), so it is fast.
+
+`K` and `E` are the requests and the slow requests of the selected route among ordinary points, and `F` and `S` are the fast and slow overflow observations. Known observations of other routes are reported as `otherRoutesKnown` and never enter a denominator. With `K = 0` the result is `NO_ROUTE_OBSERVATIONS`: the data allow the route to have had no requests, so no share, bounds or verdict is reported, even when the overflow is not empty. The mode refuses a route or threshold that is not selected (`ROUTE_NOT_SELECTED`, `DURATION_NOT_SELECTED`). The route may be typed, including a route that occurs in no ordinary point.
+
+The confirmation states that the interval is complete, each histogram observation is one completed request, the recorded duration and `http.route` of every request are correct, the overflow has genuine SDK overflow semantics, and downstream processing changed neither counts, buckets nor attribution. Data lost before the export cannot be detected. Structural applicability is checked before the confirmation. Preparation of the counts is reused while only the maximum share or the confirmation changes; a change of file, stream, interval, route or duration threshold clears the confirmation and the result.
+
 ## Attribute values
 
 Keys must be nonempty and unique within each attribute set. Each AnyValue contains exactly one recognized type:
@@ -139,12 +153,15 @@ These are user assumptions. Matching metadata and source hashes cannot prove com
 - `EXCEEDS_LIMIT`: every compatible allocation exceeds it.
 - `INDETERMINATE`: compatible allocations exist on both sides of the limit.
 - `NO_DATA`: a valid timestamped interval or window totals zero; an error rate is undefined.
+- `NO_ROUTE_OBSERVATIONS` (route slow-share mode only): the selected route has no known requests; no share or verdict is defined.
 - `INVALID_INPUT`: malformed or contradictory data.
 - `UNSUPPORTED_INPUT`: data outside the model or unconfirmed provenance.
 
 Refusals contain a diagnostic code, explanation and path when available. They are distinct from mathematical uncertainty. A structurally applicable pair can still be refused for unconfirmed provenance or an invalid threshold. See [mathematics](mathematics.md) for exact decisions and endpoint witnesses.
 
 ## Reports and state
+
+Route slow-share schema v5 adds `mode: http-route-slow-share-histogram`, the source name, size and SHA-256, `inputMetric`, `selection` (route attribute and exact value, duration threshold in seconds with the slow and fast definitions, maximum share), `assumptions.conditions` with the confirmation, `applicability` (checks or the refusal), `counts` (`K`, `E`, `F`, `S`, `otherRoutesKnown`), the `model` formulas, an `unknownAttribution` explanation, `result` with exact fractions, per-point `points` (role, count, fast and slow counts) and the lower and upper witnesses. `NO_ROUTE_OBSERVATIONS` exports no bounds, verdict or witnesses; a refusal keeps diagnostics and settings without counts. Schemas v1 to v4 are unchanged.
 
 Cumulative HTTP 5xx schema v4 adds `mode: http-5xx-histogram-cumulative`, both `sources` (name, size, SHA-256), `selectedInputs` (identity, snapshot ID, boundary), `window`, `inputMetric`, `classification`, `assumptions.conditions` with the confirmation, `applicability` (checks and matched-point count, or the refusal), `counts` at the before boundary, the after boundary and in the window, and `result` with exact fractions. Each entry of `result.points` has canonical attributes, `startTimeUnixNano`, `beforeCount`, `afterCount`, `count` (the increment), `statusCode` and `responseClass`. A refusal keeps sources, identities and diagnostics without totals, `counts` or witnesses.
 

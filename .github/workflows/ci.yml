@@ -44,5 +44,6 @@ jobs:
       - run: npm run validate:sdk
       - run: npm run validate:http
       - run: npm run validate:http-cumulative
+      - run: npm run validate:http-route
       - run: go vet ./...
         working-directory: validation

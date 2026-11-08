@@ -1,0 +1,1009 @@
+{
+  "go": "go1.27.3",
+  "commands": [
+    "npm run validate:http-route"
+  ],
+  "modules": {
+    "go.opentelemetry.io/otel": "v1.47.0",
+    "go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp": "v1.47.0",
+    "go.opentelemetry.io/otel/metric": "v1.47.0",
+    "go.opentelemetry.io/otel/sdk": "v1.47.0",
+    "go.opentelemetry.io/otel/sdk/metric": "v1.47.0",
+    "go.opentelemetry.io/proto/otlp": "v1.11.1",
+    "google.golang.org/protobuf": "v1.36.12"
+  },
+  "purpose": "SDK aggregation validation of the route slow-share bounds. Known durations are recorded directly through the Metric API into a real SDK Histogram; no HTTP server is involved and no wall-clock behavior is measured.",
+  "metric": "http.server.request.duration",
+  "unit": "s",
+  "temporality": "delta (sdk.WithTemporalitySelector)",
+  "aggregation": "explicit bucket histogram with the instrument's explicit boundaries (metric.WithExplicitBucketBoundaries); no views",
+  "explicitBounds": [
+    0.1,
+    0.25,
+    0.5,
+    1,
+    2.5
+  ],
+  "selectedRoute": "/checkout",
+  "durationThresholdSeconds": 0.5,
+  "scope": "overflowlens.http.route.validation",
+  "serializer": "OTLP HTTP exporter → OTLP protobuf → protojson (UseEnumNumbers)",
+  "cases": [
+    {
+      "name": "route-overflow",
+      "file": "route-overflow.json",
+      "cardinalityLimit": 5,
+      "observations": 860,
+      "K": "400",
+      "E": "10",
+      "F": "194",
+      "S": "31",
+      "otherRoutesKnown": "235",
+      "ordinaryPoints": 4,
+      "overflowPoints": 1,
+      "truthSelectedRoute": {
+        "requests": "500",
+        "slow": "20",
+        "exactlyAtThreshold": "60"
+      },
+      "journal": [
+        {
+          "route": "/admin/00",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/01",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/02",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/03",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/04",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/05",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/cart",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 120,
+          "notSlower": 100,
+          "slower": 20,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 400,
+          "notSlower": 390,
+          "slower": 10,
+          "exactlyAtThreshold": 40
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "retainedBySDK": false,
+          "requests": 100,
+          "notSlower": 90,
+          "slower": 10,
+          "exactlyAtThreshold": 20
+        },
+        {
+          "route": "/health",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 30,
+          "notSlower": 30,
+          "slower": 0,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/orders",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 65,
+          "notSlower": 50,
+          "slower": 15,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 75,
+          "notSlower": 70,
+          "slower": 5,
+          "exactlyAtThreshold": 10
+        },
+        {
+          "route": "/static",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 40,
+          "notSlower": 40,
+          "slower": 0,
+          "exactlyAtThreshold": 0
+        }
+      ],
+      "plan": [
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 200
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 150
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.5,
+          "count": 40
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.75,
+          "count": 6
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 3,
+          "count": 4
+        },
+        {
+          "route": "/cart",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 100
+        },
+        {
+          "route": "/cart",
+          "method": "GET",
+          "seconds": 1.5,
+          "count": 20
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 60
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "seconds": 0.5,
+          "count": 10
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "seconds": 2.5,
+          "count": 5
+        },
+        {
+          "route": "/static",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 40
+        },
+        {
+          "route": "/health",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 30
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.05,
+          "count": 30
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.2,
+          "count": 40
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.5,
+          "count": 20
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.75,
+          "count": 6
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 3,
+          "count": 4
+        },
+        {
+          "route": "/orders",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 50
+        },
+        {
+          "route": "/orders",
+          "method": "GET",
+          "seconds": 1.5,
+          "count": 15
+        },
+        {
+          "route": "/admin/00",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/00",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/01",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/01",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/02",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/02",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/03",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/03",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/04",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/04",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/05",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/05",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "name": "route-no-overflow",
+      "file": "route-no-overflow.json",
+      "cardinalityLimit": 2000,
+      "observations": 860,
+      "K": "500",
+      "E": "20",
+      "F": "0",
+      "S": "0",
+      "otherRoutesKnown": "360",
+      "ordinaryPoints": 13,
+      "overflowPoints": 0,
+      "truthSelectedRoute": {
+        "requests": "500",
+        "slow": "20",
+        "exactlyAtThreshold": "60"
+      },
+      "journal": [
+        {
+          "route": "/admin/00",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/01",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/02",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/03",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/04",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/05",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/cart",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 120,
+          "notSlower": 100,
+          "slower": 20,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 400,
+          "notSlower": 390,
+          "slower": 10,
+          "exactlyAtThreshold": 40
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "retainedBySDK": true,
+          "requests": 100,
+          "notSlower": 90,
+          "slower": 10,
+          "exactlyAtThreshold": 20
+        },
+        {
+          "route": "/health",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 30,
+          "notSlower": 30,
+          "slower": 0,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/orders",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 65,
+          "notSlower": 50,
+          "slower": 15,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 75,
+          "notSlower": 70,
+          "slower": 5,
+          "exactlyAtThreshold": 10
+        },
+        {
+          "route": "/static",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 40,
+          "notSlower": 40,
+          "slower": 0,
+          "exactlyAtThreshold": 0
+        }
+      ],
+      "plan": [
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 200
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 150
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.5,
+          "count": 40
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.75,
+          "count": 6
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 3,
+          "count": 4
+        },
+        {
+          "route": "/cart",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 100
+        },
+        {
+          "route": "/cart",
+          "method": "GET",
+          "seconds": 1.5,
+          "count": 20
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 60
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "seconds": 0.5,
+          "count": 10
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "seconds": 2.5,
+          "count": 5
+        },
+        {
+          "route": "/static",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 40
+        },
+        {
+          "route": "/health",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 30
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.05,
+          "count": 30
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.2,
+          "count": 40
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.5,
+          "count": 20
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.75,
+          "count": 6
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 3,
+          "count": 4
+        },
+        {
+          "route": "/orders",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 50
+        },
+        {
+          "route": "/orders",
+          "method": "GET",
+          "seconds": 1.5,
+          "count": 15
+        },
+        {
+          "route": "/admin/00",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/00",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/01",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/01",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/02",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/02",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/03",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/03",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/04",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/04",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/05",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/05",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        }
+      ]
+    },
+    {
+      "name": "route-absent",
+      "file": "route-absent.json",
+      "cardinalityLimit": 5,
+      "observations": 860,
+      "K": "0",
+      "E": "0",
+      "F": "554",
+      "S": "41",
+      "otherRoutesKnown": "265",
+      "ordinaryPoints": 4,
+      "overflowPoints": 1,
+      "truthSelectedRoute": {
+        "requests": "500",
+        "slow": "20",
+        "exactlyAtThreshold": "60"
+      },
+      "journal": [
+        {
+          "route": "/admin/00",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/01",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/02",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/03",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/04",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/admin/05",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 5,
+          "notSlower": 4,
+          "slower": 1,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/cart",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 120,
+          "notSlower": 100,
+          "slower": 20,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 400,
+          "notSlower": 390,
+          "slower": 10,
+          "exactlyAtThreshold": 40
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "retainedBySDK": false,
+          "requests": 100,
+          "notSlower": 90,
+          "slower": 10,
+          "exactlyAtThreshold": 20
+        },
+        {
+          "route": "/health",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 30,
+          "notSlower": 30,
+          "slower": 0,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/orders",
+          "method": "GET",
+          "retainedBySDK": false,
+          "requests": 65,
+          "notSlower": 50,
+          "slower": 15,
+          "exactlyAtThreshold": 0
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 75,
+          "notSlower": 70,
+          "slower": 5,
+          "exactlyAtThreshold": 10
+        },
+        {
+          "route": "/static",
+          "method": "GET",
+          "retainedBySDK": true,
+          "requests": 40,
+          "notSlower": 40,
+          "slower": 0,
+          "exactlyAtThreshold": 0
+        }
+      ],
+      "plan": [
+        {
+          "route": "/cart",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 100
+        },
+        {
+          "route": "/cart",
+          "method": "GET",
+          "seconds": 1.5,
+          "count": 20
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 60
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "seconds": 0.5,
+          "count": 10
+        },
+        {
+          "route": "/search",
+          "method": "GET",
+          "seconds": 2.5,
+          "count": 5
+        },
+        {
+          "route": "/static",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 40
+        },
+        {
+          "route": "/health",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 30
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 200
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 150
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.5,
+          "count": 40
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 0.75,
+          "count": 6
+        },
+        {
+          "route": "/checkout",
+          "method": "GET",
+          "seconds": 3,
+          "count": 4
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.05,
+          "count": 30
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.2,
+          "count": 40
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.5,
+          "count": 20
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 0.75,
+          "count": 6
+        },
+        {
+          "route": "/checkout",
+          "method": "POST",
+          "seconds": 3,
+          "count": 4
+        },
+        {
+          "route": "/orders",
+          "method": "GET",
+          "seconds": 0.05,
+          "count": 50
+        },
+        {
+          "route": "/orders",
+          "method": "GET",
+          "seconds": 1.5,
+          "count": 15
+        },
+        {
+          "route": "/admin/00",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/00",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/01",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/01",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/02",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/02",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/03",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/03",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/04",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/04",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        },
+        {
+          "route": "/admin/05",
+          "method": "GET",
+          "seconds": 0.2,
+          "count": 4
+        },
+        {
+          "route": "/admin/05",
+          "method": "GET",
+          "seconds": 3,
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "notMeasured": "This is not a measurement of real HTTP latency. Durations are chosen constants."
+}

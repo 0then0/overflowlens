@@ -73,7 +73,8 @@ type manifest struct {
 }
 
 // `go run ./http` regenerates the delta fixtures; `go run ./http cumulative`
-// regenerates the cumulative window fixtures (cumulative.go).
+// regenerates the cumulative window fixtures (cumulative.go); `go run ./http route`
+// regenerates the route slow-share fixtures (route.go).
 func main() {
 	var err error
 	switch {
@@ -81,8 +82,10 @@ func main() {
 		err = run()
 	case len(os.Args) == 2 && os.Args[1] == "cumulative":
 		err = runCumulative()
+	case len(os.Args) == 2 && os.Args[1] == "route":
+		err = runRoute()
 	default:
-		err = fmt.Errorf("usage: go run ./http [cumulative]")
+		err = fmt.Errorf("usage: go run ./http [cumulative|route]")
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

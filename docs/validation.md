@@ -82,15 +82,27 @@ The harness differences the SDK structs independently of the JSON: 767 requests 
 
 The TypeScript test repeats these checks against the saved files: hashes, tallies, window counts, truth containment, baseline exclusion, the zero window (`NO_DATA`) and the restart refusal (`CHANGED_START_TIME`, although a count-only comparison would accept the pair). The browser spec opens the pair, checks the counts, changes the threshold, exports the report and checks the exact truth containment from the exported fractions. Port numbers and timestamps change on every run.
 
+## Route slow-share validation
+
+`npm run validate:http-route` runs `go run ./http route`, then `tests/http-route-sdk.test.ts`. It uses the pinned SDK of the other harnesses (`sdk/metric` v1.47.0, metric API v1.47.0, the OTLP HTTP exporter and ProtoJSON), a real SDK `Float64Histogram` named `http.server.request.duration` with unit `s`, explicit boundaries 0.1, 0.25, 0.5, 1 and 2.5 s, delta temporality and no Views. Known duration values are recorded **directly through the Metric API**, with no HTTP server, no timing and no waiting. This validates SDK aggregation and the arithmetic; it is not a measurement of real HTTP latency, and the case is the project's own validation, not external adoption. Versions, the plan and an independent per-attribute-set journal are in `fixtures/http/route-manifest.json`.
+
+The harness keeps a journal of (route, method, duration) before each value reaches the SDK, classifies each value into its bucket independently of the SDK, and checks that every retained series equals its journal and that the overflow equals the journal of every attribute set the SDK did not retain. Attributes are `http.route` and `http.request.method`; the selected route is `/checkout` and the duration boundary is 0.5 s.
+
+- `route-overflow.json`, cardinality limit 5: `/checkout` GET is retained (`K=400`, `E=10`); `/checkout` POST and other routes arrive after the limit, so the overflow holds fast and slow observations of several routes, including the selected one: `F=194`, `S=31`. Bounds 10/594 … 41/431 (≈1.68% … ≈9.51%) contain the true 20/500 (4%) strictly inside. Observations exactly at 0.5 s are in the workload and are counted as fast.
+- `route-no-overflow.json`, limit 2,000: the same workload without overflow gives `K=500`, `E=20` and one exact share 20/500.
+- `route-absent.json`, limit 5: every `/checkout` request arrives after the limit, so the route has no ordinary point (`K=0`) although 500 of its requests are in the overflow. The result is `NO_ROUTE_OBSERVATIONS`.
+
+The harness fails if conservation, the overflow split or truth containment fails. Timestamps change on every run.
+
 ## Synthetic controls
 
-Malformed controls alter copies of valid exports to test cumulative HTTP windows (reordered points and attributes, integers above int64, zero increments, exact threshold equality, changed starts, decreasing counts, mismatched series, changed bucket layout and corrupt points) and individual decreases, missing counterparts, stream mismatches and inconsistent collection boundaries. They are test inputs, not SDK-produced fixtures.
+Synthetic route slow-share inputs cover missing and invalid routes, absent buckets, unmatched boundaries, other units and temporalities, values above the safe integer range, exact threshold equality and the exhaustive assignment check. Malformed controls alter copies of valid exports to test cumulative HTTP windows (reordered points and attributes, integers above int64, zero increments, exact threshold equality, changed starts, decreasing counts, mismatched series, changed bucket layout and corrupt points) and individual decreases, missing counterparts, stream mismatches and inconsistent collection boundaries. They are test inputs, not SDK-produced fixtures.
 
 Other synthetic controls cover large integer precision, per-series starts, attribute identity order, conflicting definitions, flags, overflow shape, exact threshold equality, deterministic reports and reuse of prepared counts. The mathematical demo and endpoint histories demonstrate information loss; they are distinct from the independently recorded SDK workload.
 
 ## Browser and packaging checks
 
-Follow [Contributing](../CONTRIBUTING.md) to run formatting, unit tests, production build and Chromium acceptance. Browser cases cover all three modes, provenance resets, concurrent and replaced Worker imports, refusal reports, source hashes including UTF-8 BOM, exact thresholds and mobile layout.
+Follow [Contributing](../CONTRIBUTING.md) to run formatting, unit tests, production build and Chromium acceptance. Browser cases cover all modes, the route flow with a real SDK export, provenance resets, concurrent and replaced Worker imports, refusal reports, source hashes including UTF-8 BOM, exact thresholds and mobile layout.
 
 A synthetic pair with 28,000 series exercises files near the 5 MiB limit. Threshold changes reuse prepared counts, preserve exact results and produce no browser long tasks during the checked interaction. The archive test uses the same packager as the release workflow and verifies launch instructions, checksum, assets and the Worker from the extracted archive.
 

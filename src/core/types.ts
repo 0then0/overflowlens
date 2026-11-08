@@ -84,3 +84,7 @@ export const HTTP_CUMULATIVE_CONTRACT =
 export const HTTP_CRITERION = 'HTTP 5xx';
 export const HTTP_CONTRACT =
   'This is a complete delta export of the selected interval from an SDK http.server.request.duration explicit-bucket Histogram, before transformations that change values or measurement attributes. Every histogram observation is one completed HTTP request, ordinary points retain the correct http.response.status_code, and downstream processing changed neither counts nor attribution. The selected overflow marker has genuine SDK overflow semantics.';
+export const HTTP_ROUTE_ATTRIBUTE = 'http.route';
+export const HTTP_DURATION_UNIT = 's';
+export const HTTP_ROUTE_CONTRACT =
+  'This is a complete delta export of the selected interval from an SDK http.server.request.duration explicit-bucket Histogram with unit s, before transformations that change counts, buckets or attributes. Every histogram observation is one completed HTTP request with its correct duration, every ordinary non-empty point retains the correct http.route, and the overflow point has genuine SDK overflow semantics. Downstream processing changed neither counts, buckets nor attribution.';

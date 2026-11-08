@@ -279,3 +279,68 @@ export function largeHttpCumulativeWindow(points = 19000) {
     });
   return { before: snapshot('2000000000', '100'), after: snapshot('3000000000', '101') };
 }
+
+export type RouteSpec = {
+  // `undefined` gets a unique default route; `null` omits the attribute.
+  route?: string | null;
+  routeValue?: unknown;
+  overflow?: boolean;
+  // Bucket counts for the layout below; the point count is their sum unless overridden.
+  buckets?: (string | number)[];
+  bounds?: number[];
+  count?: string | number | null;
+  attributes?: unknown[];
+  point?: Record<string, unknown>;
+};
+// Delta explicit-bucket http.server.request.duration histogram. The default layout is
+// (-inf, 0.1], (0.1, 0.5], (0.5, 1], (1, +inf): with the duration boundary 0.5 the first
+// two buckets are fast, including everything exactly at 0.5, and the last two are slow.
+export function routeFixture(specs: RouteSpec[], metric: Record<string, unknown> = {}) {
+  const points = specs.map((spec, i) => {
+    const buckets = (spec.buckets ?? [1, 0, 0, 0]).map(String);
+    const total = buckets.reduce((n, b) => n + BigInt(b), 0n).toString();
+    const attributes: unknown[] = spec.overflow
+      ? [{ key: 'otel.metric.overflow', value: { boolValue: true } }]
+      : [{ key: 'test.id', value: { intValue: String(i) } }];
+    if (!spec.overflow && spec.route !== null)
+      attributes.push({
+        key: 'http.route',
+        value: spec.routeValue ?? { stringValue: spec.route ?? `/default/${i}` },
+      });
+    attributes.push(...(spec.attributes ?? []));
+    const count = spec.count === undefined ? total : spec.count;
+    return {
+      attributes,
+      startTimeUnixNano: '1000000000',
+      timeUnixNano: '2000000000',
+      ...(count === null ? {} : { count }),
+      sum: total === '0' ? 0 : 0.5,
+      bucketCounts: buckets,
+      explicitBounds: spec.bounds ?? [0.1, 0.5, 1],
+      ...spec.point,
+    };
+  });
+  return httpFixtureShell(points, metric);
+}
+function httpFixtureShell(points: Record<string, unknown>[], metric: Record<string, unknown>) {
+  return {
+    resourceMetrics: [
+      {
+        resource: { attributes: [{ key: 'service.name', value: { stringValue: 'test' } }] },
+        scopeMetrics: [
+          {
+            scope: { name: 'test', version: '1' },
+            metrics: [
+              {
+                name: 'http.server.request.duration',
+                unit: 's',
+                histogram: { aggregationTemporality: 1, dataPoints: points },
+                ...metric,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}

@@ -49,6 +49,27 @@ For a delta `http.server.request.duration` histogram the same model applies with
 
 For two cumulative snapshots of the same explicit-bucket histogram, K, E and O are sums of per-series `count` increments `count(after) − count(before)`, with the same classification, bounds and threshold rules. Baseline observations cancel only when every series has one continuous history: the same start time, no decrease and the same series in both exports. Otherwise the difference is not the window and the pair is refused. Snapshot bounds are never subtracted. Unretained requests keep their SDK semantics: window requests that arrive after the cardinality limit is reached land in the overflow series, so the overflow increment is the window's own `O`.
 
+## Route slow share
+
+For one exact `http.route` of a delta `http.server.request.duration` histogram, choose a duration boundary `d` that is an explicit bucket bound. A request is slow when its duration is strictly greater than `d`; an observation equal to `d` is fast, because bucket upper bounds are inclusive. Let `K` be the requests of the route among ordinary points, `E` the slow ones among them, `F` the fast and `S` the slow observations in SDK overflow. Ordinary observations of other routes are not in the denominator.
+
+SDK overflow loses `http.route`, but its histogram keeps the bucket distribution, so `F` and `S` are known while the route of each overflow observation is not. Let `f` fast and `s` slow overflow observations belong to the route, with integers `0 ≤ f ≤ F` and `0 ≤ s ≤ S`; the rest belong to other routes. The route's slow share is
+
+```text
+(E + s) / (K + f + s)
+```
+
+For `K > 0` the denominator is positive. With `E ≤ K` the expression does not decrease in `s` and does not increase in `f`, so
+
+```text
+lower = E / (K + F)        f = F, s = 0
+upper = (E + S) / (K + S)  f = 0, s = S
+```
+
+Both are attained by those assignments; the thresholds are decided as above (`upper ≤ p` within, `lower > p` exceeds). Attributing all overflow to the route, or using `K + F + S` as a fixed denominator, would be wrong: it forces every other route's overflow observations into this route. With `K = 0` the data admit `f = s = 0`, a route without requests, so the share is undefined and nothing is reported, even if the overflow is not empty. Example: `K=900, E=9, F=90, S=10` gives `9/990 … 19/910`, about 0.91% … 2.09%.
+
+Durations are never interpolated within a bucket, and the bounds are not a confidence interval. The test suite enumerates all `f` and `s` for `K=1..7`, `E=0..K`, `F=0..6`, `S=0..6` and checks the minimum and maximum against the formulas.
+
 ## Why outcomes cannot be recovered
 
 The synthetic [demo export](../public/examples/demo.json) has ordinary counts `success=true:900`, `success=false:1`, and overflow 99. Hold the Resource, scope, unit, timestamps and emitted attributes fixed.

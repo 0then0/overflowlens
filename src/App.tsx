@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import httpExample from '../fixtures/http/http-overflow.json?raw';
+import routeExample from '../fixtures/http/route-overflow.json?raw';
 import cumulativeAfter from '../fixtures/sdk/cumulative-after.json?raw';
 import cumulativeBefore from '../fixtures/sdk/cumulative-before.json?raw';
 import { version } from '../package.json';
 import demo from '../public/examples/demo.json?raw';
 import { analyze, outcomeCandidates, type Settings } from './core/analyze';
-import { formatPercent, scalePercent } from './core/calculate';
+import { formatPercent } from './core/calculate';
 import { type CumulativeSettings, calculateCumulative, pairCumulative } from './core/cumulative';
 import { analyzeHttp } from './core/http';
 import { calculateHttpCumulative, pairHttpCumulative } from './core/httpCumulative';
@@ -15,8 +16,16 @@ import {
   makeHttpCumulativeReport,
   makeHttpReport,
   makeReport,
+  makeRouteSlowReport,
   type Source,
 } from './core/report';
+import {
+  calculateRouteSlowShare,
+  durationCandidates,
+  millisecondsLabel,
+  prepareRouteSlowShare,
+  routeCandidates,
+} from './core/routeSlow';
 import {
   type Analysis,
   CONTRACT,
@@ -27,15 +36,18 @@ import {
   HTTP_CRITERION,
   HTTP_CUMULATIVE_CONTRACT,
   HTTP_METRIC,
+  HTTP_ROUTE_ATTRIBUTE,
+  HTTP_ROUTE_CONTRACT,
   HTTP_STATUS_ATTRIBUTE,
   type ImportData,
   InputError,
   MAX_FILE_BYTES,
   MAX_PAIR_BYTES,
   OVERFLOW,
-  type Rational,
   type Stream,
 } from './core/types';
+import { fraction, Range } from './Range';
+import { RouteResults } from './RouteResults';
 
 const labels = {
   WITHIN_LIMIT: 'Within limit for the imported interval',
@@ -45,20 +57,31 @@ const labels = {
   UNSUPPORTED_INPUT: 'Unsupported input',
   INVALID_INPUT: 'Invalid input',
 };
-const defaults: Settings = {
+// The route slow-share mode adds a route and a duration boundary to the shared inputs.
+// `threshold` is the maximum error rate, HTTP 5xx share or slow-request share of the mode.
+type UiSettings = Settings & { route: string; durationSeconds: string };
+const defaults: UiSettings = {
   intervalId: '',
   outcomeAttribute: '',
   errorValue: false,
   threshold: '1',
   contractConfirmed: false,
+  route: '',
+  durationSeconds: '',
 };
 type Side = 'before' | 'after';
-type Mode = 'delta' | 'cumulative' | 'http' | 'http-cumulative';
+type Mode = 'delta' | 'cumulative' | 'http' | 'http-cumulative' | 'http-route';
 const isPaired = (mode: Mode) => mode === 'cumulative' || mode === 'http-cumulative';
 const isHttp = (mode: Mode) => mode === 'http' || mode === 'http-cumulative';
 function supports(mode: Mode, s: Stream) {
   const { identity } = s;
   if (s.diagnostics.length) return false;
+  if (mode === 'http-route')
+    return (
+      identity.type === 'histogram' &&
+      identity.name === HTTP_METRIC &&
+      identity.temporality === 'DELTA'
+    );
   return isHttp(mode)
     ? identity.type === 'histogram' &&
         identity.name === HTTP_METRIC &&
@@ -72,63 +95,9 @@ function boundaryTotal(
 ) {
   return points.reduce((n, p) => n + BigInt(p[key]), 0n).toString();
 }
-function fraction(r: Rational) {
-  return `${r.numerator} / ${r.denominator}`;
-}
 function time(n: string) {
   const d = new Date(Number(BigInt(n) / 1_000_000n));
   return Number.isNaN(d.getTime()) ? `${n} ns` : d.toISOString();
-}
-function Range({
-  lower,
-  upper,
-  threshold,
-  uncertain,
-  subject,
-}: {
-  lower: Rational;
-  upper: Rational;
-  threshold: Rational;
-  uncertain: boolean;
-  subject: string;
-}) {
-  return (
-    <figure
-      className="range-visual"
-      aria-label={`Possible ${subject} ${formatPercent(lower)} to ${formatPercent(upper)}; threshold ${formatPercent(threshold)}`}
-    >
-      <figcaption className="range-legend">
-        <span>Possible {subject}</span>
-        <span>│ Maximum allowed: {formatPercent(threshold)}</span>
-      </figcaption>
-      <div className="track">
-        <div
-          className="band"
-          style={{
-            left: `${scalePercent(lower)}%`,
-            width: `${scalePercent(upper) - scalePercent(lower)}%`,
-            minWidth: uncertain ? '3px' : '0',
-          }}
-        />
-        <i className="endpoint" style={{ left: `${scalePercent(lower)}%` }} />
-        <i className="endpoint" style={{ left: `${scalePercent(upper)}%` }} />
-        <i className="threshold" style={{ left: `${scalePercent(threshold)}%` }} />
-      </div>
-      <div className="axis">
-        <span>0%</span>
-        <span>25%</span>
-        <span>50%</span>
-        <span>75%</span>
-        <span>100%</span>
-      </div>
-      {uncertain && (
-        <p className="chart-note">
-          The interval has nonzero width. Very narrow ranges use a minimum visible mark; exact
-          fractions are shown below.
-        </p>
-      )}
-    </figure>
-  );
 }
 export function App() {
   const [mode, setMode] = useState<Mode>('delta');
@@ -143,7 +112,7 @@ export function App() {
   const [source, setSource] = useState<Source | null>(null);
   const [importError, setImportError] = useState<Diagnostic | null>(null);
   const [streamId, setStreamId] = useState('');
-  const [settings, setSettings] = useState<Settings>(defaults);
+  const [settings, setSettings] = useState<UiSettings>(defaults);
   const [busy, setBusy] = useState(false);
   const revision = useRef({ before: 0, after: 0 });
   const importer = useRef<Partial<Record<Side, { worker: Worker; cancel: () => void }>>>({});
@@ -172,7 +141,7 @@ export function App() {
   );
   const candidates = useMemo(() => {
     if (!stream) return [];
-    if (isHttp(mode)) return [];
+    if (isHttp(mode) || mode === 'http-route') return [];
     if (mode === 'delta') return outcomeCandidates(stream, settings.intervalId);
     const keys = new Set<string>();
     for (const p of stream.snapshots.find((s) => s.id === beforeSnapshotId)?.points ?? []) {
@@ -225,6 +194,40 @@ export function App() {
     return pairing ? calculateCumulative(pairing, cumulativeSettings) : null;
   }, [stream, pairing, httpPairing, settings, cumulativeSettings, mode, busy, afterBusy]);
   const valid = result && 'K' in result ? result : null;
+  // Only the input, stream, interval, route and duration boundary prepare the counts; a change
+  // of the maximum share or the confirmation reuses them.
+  const routes = useMemo(
+    () => (mode === 'http-route' && stream ? routeCandidates(stream, settings.intervalId) : []),
+    [mode, stream, settings.intervalId],
+  );
+  const durations = useMemo(
+    () =>
+      mode === 'http-route' && stream
+        ? durationCandidates(stream, settings.intervalId, settings.route)
+        : [],
+    [mode, stream, settings.intervalId, settings.route],
+  );
+  const routePrepared = useMemo(
+    () =>
+      mode === 'http-route' && stream && !busy
+        ? prepareRouteSlowShare(stream, {
+            intervalId: settings.intervalId,
+            route: settings.route,
+            durationSeconds: settings.durationSeconds,
+          })
+        : null,
+    [mode, stream, busy, settings.intervalId, settings.route, settings.durationSeconds],
+  );
+  const routeResult = useMemo(
+    () =>
+      routePrepared
+        ? calculateRouteSlowShare(routePrepared, {
+            maxSlowPercent: settings.threshold,
+            contractConfirmed: settings.contractConfirmed,
+          })
+        : null,
+    [routePrepared, settings.threshold, settings.contractConfirmed],
+  );
   function reset(side?: Side) {
     for (const key of side ? [side] : (['before', 'after'] as const)) {
       importer.current[key]?.worker.terminate();
@@ -295,7 +298,7 @@ export function App() {
       // than an unrelated stream's unsupported metric.
       const first =
         parsed.streams.find((s) => supports(mode, s)) ??
-        (mode === 'http-cumulative'
+        (mode === 'http-cumulative' || mode === 'http-route'
           ? parsed.streams.find((s) => s.identity.name === HTTP_METRIC)
           : undefined) ??
         parsed.streams[0];
@@ -363,6 +366,25 @@ export function App() {
     }
   }
   function exportReport() {
+    if (mode === 'http-route') {
+      if (!stream || !routePrepared || !routeResult || !source) return;
+      download(
+        makeRouteSlowReport(
+          stream,
+          {
+            intervalId: settings.intervalId,
+            route: settings.route,
+            durationSeconds: settings.durationSeconds,
+            maxSlowPercent: settings.threshold,
+            contractConfirmed: settings.contractConfirmed,
+          },
+          routePrepared,
+          routeResult,
+          source,
+        ),
+      );
+      return;
+    }
     if (!stream || !result || !source) return;
     if (isPaired(mode) && (!afterStream || !afterSource)) return;
     const report =
@@ -395,7 +417,21 @@ export function App() {
                 result,
                 source,
               )
-            : makeReport(stream, settings, result, source);
+            : makeReport(
+                stream,
+                {
+                  intervalId: settings.intervalId,
+                  outcomeAttribute: settings.outcomeAttribute,
+                  errorValue: settings.errorValue,
+                  threshold: settings.threshold,
+                  contractConfirmed: settings.contractConfirmed,
+                },
+                result,
+                source,
+              );
+    download(report);
+  }
+  function download(report: string) {
     const url = URL.createObjectURL(new Blob([report], { type: 'application/json' }));
     const link = document.createElement('a');
     link.href = url;
@@ -457,6 +493,7 @@ export function App() {
                   <option value="cumulative">Cumulative window</option>
                   <option value="http">HTTP 5xx histogram (delta)</option>
                   <option value="http-cumulative">HTTP 5xx histogram (cumulative window)</option>
+                  <option value="http-route">HTTP route slow share (delta)</option>
                 </select>
               </label>
               {isPaired(mode) && (
@@ -533,6 +570,8 @@ export function App() {
                   setAfterBusy(isPaired(mode));
                   if (mode === 'http') {
                     await load(httpExample, 'http-overflow.json · SDK example', beforeToken);
+                  } else if (mode === 'http-route') {
+                    await load(routeExample, 'route-overflow.json · SDK example', beforeToken);
                   } else if (mode === 'http-cumulative') {
                     // Loaded on demand: the real exports are large and most visits never need them.
                     let examples: [{ default: string }, { default: string }];
@@ -584,7 +623,11 @@ export function App() {
                     revision.current.after === afterToken
                   )
                     setSettings((current) =>
-                      isHttp(mode) ? current : { ...current, outcomeAttribute: 'success' },
+                      mode === 'http-route'
+                        ? { ...current, route: '/checkout', durationSeconds: '0.5' }
+                        : isHttp(mode)
+                          ? current
+                          : { ...current, outcomeAttribute: 'success' },
                     );
                 }}
               >
@@ -592,9 +635,11 @@ export function App() {
                   ? 'Load the 900 / 1 / 99 example'
                   : mode === 'http'
                     ? 'Load the HTTP 5xx SDK example'
-                    : mode === 'http-cumulative'
-                      ? 'Load the cumulative HTTP 5xx before / after example'
-                      : 'Load the cumulative before / after example'}{' '}
+                    : mode === 'http-route'
+                      ? 'Load the route slow-share SDK example'
+                      : mode === 'http-cumulative'
+                        ? 'Load the cumulative HTTP 5xx before / after example'
+                        : 'Load the cumulative before / after example'}{' '}
                 <span>↗</span>
               </button>
               <p className="fine">
@@ -602,9 +647,11 @@ export function App() {
                   ? 'Synthetic SDK example: 1,000 requests in the window, 0.1%–10% possible errors; the known true rate is 3.4%. Baseline requests are excluded.'
                   : mode === 'http-cumulative'
                     ? 'Two real OpenTelemetry Go otelhttp cumulative exports with a small SDK cardinality limit and overflow at both snapshots. Only the requests between the snapshots are counted; baseline requests are excluded.'
-                    : mode === 'http'
-                      ? 'Real OpenTelemetry Go otelhttp export with a small SDK cardinality limit: known requests, known HTTP 5xx and an overflow count with unknown status codes.'
-                      : 'Synthetic example: 900 known successes, 1 known error and 99 requests with unknown outcomes.'}{' '}
+                    : mode === 'http-route'
+                      ? 'Real OpenTelemetry Go SDK Histogram export with known durations recorded directly through the Metric API and a small cardinality limit: /checkout has known requests, and the overflow holds fast and slow observations of several routes. This validates SDK aggregation; it is not a measurement of real HTTP latency.'
+                      : mode === 'http'
+                        ? 'Real OpenTelemetry Go otelhttp export with a small SDK cardinality limit: known requests, known HTTP 5xx and an overflow count with unknown status codes.'
+                        : 'Synthetic example: 900 known successes, 1 known error and 99 requests with unknown outcomes.'}{' '}
                 Confirm the assumptions below to analyze it. Imported files and reports are
                 processed locally in your browser; the hosted app downloads its own assets.
               </p>
@@ -708,6 +755,70 @@ export function App() {
                       Exact boundaries (Unix nanoseconds):{' '}
                       <code>{settings.intervalId.replace(':', ' → ')}</code>
                     </p>
+                  )}
+                  {mode === 'http-route' && (
+                    <>
+                      <label>
+                        HTTP route (<code>{HTTP_ROUTE_ATTRIBUTE}</code>)
+                        <input
+                          list="routes"
+                          placeholder="e.g. /checkout"
+                          autoComplete="off"
+                          disabled={!stream || !settings.intervalId || busy}
+                          value={settings.route}
+                          onChange={(e) =>
+                            setSettings((s) => ({
+                              ...s,
+                              route: e.target.value,
+                              durationSeconds: '',
+                              contractConfirmed: false,
+                            }))
+                          }
+                        />
+                        <datalist id="routes">
+                          {routes.map((r) => (
+                            <option key={r} value={r} />
+                          ))}
+                        </datalist>
+                      </label>
+                      <label>
+                        Duration threshold
+                        <select
+                          disabled={!stream || !settings.route || busy}
+                          value={settings.durationSeconds}
+                          onChange={(e) =>
+                            setSettings((s) => ({
+                              ...s,
+                              durationSeconds: e.target.value,
+                              contractConfirmed: false,
+                            }))
+                          }
+                        >
+                          <option value="">Select a bucket boundary</option>
+                          {durations.map((d) => (
+                            <option key={d} value={d}>
+                              {d} s ({millisecondsLabel(d)})
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      {settings.route && !durations.length && (
+                        <p className="fine" role="status" data-testid="no-boundary">
+                          No bucket boundary is shared by every non-empty overflow and
+                          selected-route point, so no duration threshold can be offered and the
+                          calculation is refused. Nothing is interpolated or rounded to a
+                          neighboring boundary.
+                        </p>
+                      )}
+                      <p className="fine" data-testid="criterion">
+                        Criterion: a request is <strong>slow</strong> when its duration is strictly
+                        greater than the threshold; a duration exactly equal to it is not slow. The
+                        threshold must be an exact explicit bucket boundary of the overflow and
+                        selected-route points, in seconds; it is never interpolated or rounded. The
+                        route is matched exactly. Every ordinary non-empty point needs one string{' '}
+                        <code>{HTTP_ROUTE_ATTRIBUTE}</code>.
+                      </p>
+                    </>
                   )}
                   {mode === 'http' && (
                     <p className="fine" data-testid="criterion">
@@ -837,17 +948,23 @@ export function App() {
                       ? HTTP_CUMULATIVE_CONTRACT
                       : mode === 'http'
                         ? HTTP_CONTRACT
-                        : CONTRACT}
+                        : mode === 'http-route'
+                          ? HTTP_ROUTE_CONTRACT
+                          : CONTRACT}
                 </span>
               </label>
               <p className="fine">
-                {isHttp(mode)
-                  ? 'This is your assumption. A matching metric name never confirms it: the file cannot prove request semantics, status attribution, completeness or SDK origin.'
-                  : 'Choose the outcome before confirming. This is your assumption. A JSON file cannot prove completeness, SDK origin or synchronous instrumentation.'}
+                {mode === 'http-route'
+                  ? 'This is your assumption. A matching metric name never confirms it: the file cannot prove request semantics, route or duration correctness, completeness or SDK origin. Data lost before the export cannot be detected.'
+                  : isHttp(mode)
+                    ? 'This is your assumption. A matching metric name never confirms it: the file cannot prove request semantics, status attribution, completeness or SDK origin.'
+                    : 'Choose the outcome before confirming. This is your assumption. A JSON file cannot prove completeness, SDK origin or synchronous instrumentation.'}
               </p>
-              {isHttp(mode) ? (
+              {isHttp(mode) || mode === 'http-route' ? (
                 <label>
-                  Maximum HTTP 5xx rate (%)
+                  {mode === 'http-route'
+                    ? 'Maximum share of slow requests (%)'
+                    : 'Maximum HTTP 5xx rate (%)'}
                   <input
                     inputMode="decimal"
                     disabled={!stream || busy || afterBusy}
@@ -914,264 +1031,293 @@ export function App() {
             </section>
           </div>
           <div className="results">
-            <section
-              className={`panel result-panel ${result?.status.toLowerCase() ?? ''}`}
-              aria-live="polite"
-            >
-              <div className="result-heading">
-                <span className="eyebrow">WHAT THE DATA SUPPORTS</span>
-                <span className="mini-label">
-                  {mode === 'delta'
-                    ? 'INTERVAL ANALYSIS'
-                    : mode === 'http'
-                      ? 'HTTP 5XX HISTOGRAM'
-                      : mode === 'http-cumulative'
-                        ? 'HTTP 5XX CUMULATIVE WINDOW'
-                        : 'CUMULATIVE WINDOW'}
-                </span>
-              </div>
-              {!result ? (
-                <div className="empty">
-                  <div className="empty-symbol">[ ? ]</div>
-                  <h2>Your count tells part of the story.</h2>
-                  <p>
-                    {mode === 'http-cumulative'
-                      ? 'Import the Before and After exports or load the example, check the pair and confirm the conditions to see the HTTP 5xx bounds for the window.'
-                      : mode === 'http'
-                        ? 'Import an export or load the example, then select the interval and confirm the conditions to see the HTTP 5xx bounds.'
-                        : 'Import an export or load the example, then select the outcome and confirm its provenance to see the rest.'}
-                  </p>
-                </div>
-              ) : valid ? (
-                <>
-                  <div className="verdict">
-                    <span className="verdict-symbol">
-                      {valid.status === 'WITHIN_LIMIT'
-                        ? '✓'
-                        : valid.status === 'EXCEEDS_LIMIT'
-                          ? '!'
-                          : '?'}
+            {mode === 'http-route' ? (
+              <RouteResults
+                stream={stream}
+                intervalId={settings.intervalId}
+                route={settings.route}
+                durationSeconds={settings.durationSeconds}
+                prepared={routePrepared}
+                result={routeResult}
+                canExport={!!routeResult && !!source}
+                onExport={exportReport}
+              />
+            ) : (
+              <>
+                <section
+                  className={`panel result-panel ${result?.status.toLowerCase() ?? ''}`}
+                  aria-live="polite"
+                >
+                  <div className="result-heading">
+                    <span className="eyebrow">WHAT THE DATA SUPPORTS</span>
+                    <span className="mini-label">
+                      {mode === 'delta'
+                        ? 'INTERVAL ANALYSIS'
+                        : mode === 'http'
+                          ? 'HTTP 5XX HISTOGRAM'
+                          : mode === 'http-cumulative'
+                            ? 'HTTP 5XX CUMULATIVE WINDOW'
+                            : 'CUMULATIVE WINDOW'}
                     </span>
-                    <h2>
-                      {isPaired(mode)
-                        ? labels[valid.status].replace('imported interval', 'cumulative window')
-                        : labels[valid.status]}
-                    </h2>
                   </div>
-                  {valid.lower && valid.upper ? (
-                    <>
-                      <div className="range-number" data-testid="range">
-                        {formatPercent(valid.lower)} <span>…</span> {formatPercent(valid.upper)}
-                      </div>
-                      <p className="range-caption">
-                        {isHttp(mode)
-                          ? valid.O > 0n
-                            ? 'Possible true HTTP 5xx share · nonzero uncertainty'
-                            : 'Exact HTTP 5xx share · no overflow observations'
-                          : valid.O > 0n
-                            ? 'Possible true error rate · nonzero uncertainty'
-                            : 'Exact error rate · no overflow observations'}
+                  {!result ? (
+                    <div className="empty">
+                      <div className="empty-symbol">[ ? ]</div>
+                      <h2>Your count tells part of the story.</h2>
+                      <p>
+                        {mode === 'http-cumulative'
+                          ? 'Import the Before and After exports or load the example, check the pair and confirm the conditions to see the HTTP 5xx bounds for the window.'
+                          : mode === 'http'
+                            ? 'Import an export or load the example, then select the interval and confirm the conditions to see the HTTP 5xx bounds.'
+                            : 'Import an export or load the example, then select the outcome and confirm its provenance to see the rest.'}
                       </p>
-                      <Range
-                        lower={valid.lower}
-                        upper={valid.upper}
-                        threshold={valid.threshold}
-                        uncertain={valid.O > 0n}
-                        subject={isHttp(mode) ? 'HTTP 5xx rate' : 'error rate'}
-                      />
-                      <div className="explanation">
-                        <strong>
-                          {valid.status === 'INDETERMINATE'
-                            ? 'Both outcomes remain possible.'
-                            : valid.status === 'WITHIN_LIMIT'
-                              ? 'Every possible allocation meets your limit.'
-                              : 'Every possible allocation exceeds your limit.'}
-                        </strong>
-                        <p>
-                          {valid.status === 'INDETERMINATE'
-                            ? 'Some allocations of the overflow count meet the threshold, and others exceed it. These data cannot settle the question.'
-                            : valid.status === 'WITHIN_LIMIT'
-                              ? isHttp(mode)
-                                ? 'Even if every overflow request was an HTTP 5xx response, the share would remain at or below the maximum.'
-                                : 'Even if every overflow request was an error, the error rate would remain at or below the maximum.'
-                              : isHttp(mode)
-                                ? 'Known HTTP 5xx responses alone exceed the maximum, even if no overflow request was a 5xx response.'
-                                : 'Known errors alone exceed the maximum, even if every overflow request was successful.'}
-                        </p>
+                    </div>
+                  ) : valid ? (
+                    <>
+                      <div className="verdict">
+                        <span className="verdict-symbol">
+                          {valid.status === 'WITHIN_LIMIT'
+                            ? '✓'
+                            : valid.status === 'EXCEEDS_LIMIT'
+                              ? '!'
+                              : '?'}
+                        </span>
+                        <h2>
+                          {isPaired(mode)
+                            ? labels[valid.status].replace('imported interval', 'cumulative window')
+                            : labels[valid.status]}
+                        </h2>
                       </div>
+                      {valid.lower && valid.upper ? (
+                        <>
+                          <div className="range-number" data-testid="range">
+                            {formatPercent(valid.lower)} <span>…</span> {formatPercent(valid.upper)}
+                          </div>
+                          <p className="range-caption">
+                            {isHttp(mode)
+                              ? valid.O > 0n
+                                ? 'Possible true HTTP 5xx share · nonzero uncertainty'
+                                : 'Exact HTTP 5xx share · no overflow observations'
+                              : valid.O > 0n
+                                ? 'Possible true error rate · nonzero uncertainty'
+                                : 'Exact error rate · no overflow observations'}
+                          </p>
+                          <Range
+                            lower={valid.lower}
+                            upper={valid.upper}
+                            threshold={valid.threshold}
+                            uncertain={valid.O > 0n}
+                            subject={isHttp(mode) ? 'HTTP 5xx rate' : 'error rate'}
+                          />
+                          <div className="explanation">
+                            <strong>
+                              {valid.status === 'INDETERMINATE'
+                                ? 'Both outcomes remain possible.'
+                                : valid.status === 'WITHIN_LIMIT'
+                                  ? 'Every possible allocation meets your limit.'
+                                  : 'Every possible allocation exceeds your limit.'}
+                            </strong>
+                            <p>
+                              {valid.status === 'INDETERMINATE'
+                                ? 'Some allocations of the overflow count meet the threshold, and others exceed it. These data cannot settle the question.'
+                                : valid.status === 'WITHIN_LIMIT'
+                                  ? isHttp(mode)
+                                    ? 'Even if every overflow request was an HTTP 5xx response, the share would remain at or below the maximum.'
+                                    : 'Even if every overflow request was an error, the error rate would remain at or below the maximum.'
+                                  : isHttp(mode)
+                                    ? 'Known HTTP 5xx responses alone exceed the maximum, even if no overflow request was a 5xx response.'
+                                    : 'Known errors alone exceed the maximum, even if every overflow request was successful.'}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="no-data">
+                          The total count is zero. An error rate is undefined; no threshold
+                          conclusion is possible.
+                        </p>
+                      )}
                     </>
                   ) : (
-                    <p className="no-data">
-                      The total count is zero. An error rate is undefined; no threshold conclusion
-                      is possible.
+                    <div className="diagnostic">
+                      <h2>{labels[result.status]}</h2>
+                      {'diagnostic' in result && (
+                        <>
+                          <p>{result.diagnostic.message}</p>
+                          <code>{result.diagnostic.code}</code>
+                          {result.diagnostic.path && (
+                            <p className="fine">{result.diagnostic.path}</p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </section>
+                <section className="panel counts-panel">
+                  <h2>Every observation accounted for</h2>
+                  {isHttp(mode) && stream && (
+                    <dl className="selection" data-testid="selection">
+                      <dt>Criterion</dt>
+                      <dd>{HTTP_CRITERION}</dd>
+                      <dt>Stream</dt>
+                      <dd>
+                        {stream.identity.name} · {stream.identity.scope.name || '(unnamed scope)'} ·{' '}
+                        {stream.identity.temporality}
+                      </dd>
+                      {mode === 'http-cumulative' ? (
+                        <>
+                          <dt>Window</dt>
+                          <dd data-testid="window">
+                            {beforeSnapshotId && afterSnapshotId ? (
+                              <>
+                                <code>
+                                  ({beforeSnapshotId}, {afterSnapshotId}] ns
+                                </code>
+                                <br />
+                                {time(beforeSnapshotId)} → {time(afterSnapshotId)}
+                              </>
+                            ) : (
+                              '—'
+                            )}
+                          </dd>
+                          <dt>Counts at the boundaries</dt>
+                          <dd data-testid="boundary-counts">
+                            {valid && httpPairing?.status === 'APPLICABLE'
+                              ? `${boundaryTotal(httpPairing.evidence.points, 'beforeCount')} before → ${boundaryTotal(httpPairing.evidence.points, 'afterCount')} after; baseline excluded`
+                              : '—'}
+                          </dd>
+                        </>
+                      ) : (
+                        <>
+                          <dt>Interval</dt>
+                          <dd>
+                            {settings.intervalId ? (
+                              <code>{settings.intervalId.replace(':', ' → ')} ns</code>
+                            ) : (
+                              '—'
+                            )}
+                          </dd>
+                        </>
+                      )}
+                    </dl>
+                  )}
+                  <div className="counts">
+                    {(['K', 'E', 'O', 'T'] as const).map((key, i) => (
+                      <div key={key}>
+                        <span>
+                          {
+                            (isHttp(mode)
+                              ? [
+                                  'Known requests',
+                                  'Known HTTP 5xx',
+                                  'SDK overflow',
+                                  'Total requests',
+                                ]
+                              : [
+                                  'Known requests',
+                                  'Known errors',
+                                  'SDK overflow',
+                                  'Total requests',
+                                ])[i]
+                          }{' '}
+                          <code>{key}</code>
+                        </span>
+                        <strong>{valid ? valid[key].toString() : '—'}</strong>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="fine">
+                    {isHttp(mode) ? 'Known non-5xx responses' : 'Known successes'} = K − E
+                    {valid ? ` = ${valid.K - valid.E}` : ''}. The denominator includes overflow.
+                  </p>
+                </section>
+                <section className="panel method-panel">
+                  <h2>Bounds you can check</h2>
+                  <div className="formula-row">
+                    <div>
+                      <span>LOWER BOUND</span>
+                      <code>E / T</code>
+                      {valid?.lower && <p>{fraction(valid.lower)}</p>}
+                      <p>
+                        {isHttp(mode)
+                          ? 'No overflow request is an HTTP 5xx response.'
+                          : 'All overflow requests succeed.'}
+                      </p>
+                    </div>
+                    <div>
+                      <span>UPPER BOUND</span>
+                      <code>(E + O) / T</code>
+                      {valid?.upper && <p>{fraction(valid.upper)}</p>}
+                      <p>
+                        {isHttp(mode)
+                          ? 'Every overflow request is an HTTP 5xx response.'
+                          : 'All overflow requests fail.'}
+                      </p>
+                    </div>
+                  </div>
+                  <p>
+                    These extremes are attainable under the stated assumptions. They describe what
+                    is possible, not how likely it is. No missing outcome attributes are recovered.
+                  </p>
+                  {valid && (
+                    <p className="fine">
+                      Exact threshold fraction: <code>{fraction(valid.threshold)}</code>. Display
+                      rounding never affects the verdict.
                     </p>
                   )}
-                </>
-              ) : (
-                <div className="diagnostic">
-                  <h2>{labels[result.status]}</h2>
-                  {'diagnostic' in result && (
-                    <>
-                      <p>{result.diagnostic.message}</p>
-                      <code>{result.diagnostic.code}</code>
-                      {result.diagnostic.path && <p className="fine">{result.diagnostic.path}</p>}
-                    </>
-                  )}
-                </div>
-              )}
-            </section>
-            <section className="panel counts-panel">
-              <h2>Every observation accounted for</h2>
-              {isHttp(mode) && stream && (
-                <dl className="selection" data-testid="selection">
-                  <dt>Criterion</dt>
-                  <dd>{HTTP_CRITERION}</dd>
-                  <dt>Stream</dt>
-                  <dd>
-                    {stream.identity.name} · {stream.identity.scope.name || '(unnamed scope)'} ·{' '}
-                    {stream.identity.temporality}
-                  </dd>
-                  {mode === 'http-cumulative' ? (
-                    <>
-                      <dt>Window</dt>
-                      <dd data-testid="window">
-                        {beforeSnapshotId && afterSnapshotId ? (
-                          <>
-                            <code>
-                              ({beforeSnapshotId}, {afterSnapshotId}] ns
-                            </code>
-                            <br />
-                            {time(beforeSnapshotId)} → {time(afterSnapshotId)}
-                          </>
-                        ) : (
-                          '—'
-                        )}
-                      </dd>
-                      <dt>Counts at the boundaries</dt>
-                      <dd data-testid="boundary-counts">
-                        {valid && httpPairing?.status === 'APPLICABLE'
-                          ? `${boundaryTotal(httpPairing.evidence.points, 'beforeCount')} before → ${boundaryTotal(httpPairing.evidence.points, 'afterCount')} after; baseline excluded`
-                          : '—'}
-                      </dd>
-                    </>
-                  ) : (
-                    <>
-                      <dt>Interval</dt>
-                      <dd>
-                        {settings.intervalId ? (
-                          <code>{settings.intervalId.replace(':', ' → ')} ns</code>
-                        ) : (
-                          '—'
-                        )}
-                      </dd>
-                    </>
-                  )}
-                </dl>
-              )}
-              <div className="counts">
-                {(['K', 'E', 'O', 'T'] as const).map((key, i) => (
-                  <div key={key}>
-                    <span>
-                      {
-                        (isHttp(mode)
-                          ? ['Known requests', 'Known HTTP 5xx', 'SDK overflow', 'Total requests']
-                          : ['Known requests', 'Known errors', 'SDK overflow', 'Total requests'])[i]
-                      }{' '}
-                      <code>{key}</code>
-                    </span>
-                    <strong>{valid ? valid[key].toString() : '—'}</strong>
-                  </div>
-                ))}
-              </div>
-              <p className="fine">
-                {isHttp(mode) ? 'Known non-5xx responses' : 'Known successes'} = K − E
-                {valid ? ` = ${valid.K - valid.E}` : ''}. The denominator includes overflow.
-              </p>
-            </section>
-            <section className="panel method-panel">
-              <h2>Bounds you can check</h2>
-              <div className="formula-row">
-                <div>
-                  <span>LOWER BOUND</span>
-                  <code>E / T</code>
-                  {valid?.lower && <p>{fraction(valid.lower)}</p>}
-                  <p>
-                    {isHttp(mode)
-                      ? 'No overflow request is an HTTP 5xx response.'
-                      : 'All overflow requests succeed.'}
+                  <details>
+                    <summary>When this model applies</summary>
+                    {mode === 'http-cumulative' ? (
+                      <p>
+                        Two complete cumulative exports of the same explicit-bucket{' '}
+                        <code>{HTTP_METRIC}</code> Histogram from one continuous history, with the
+                        same series, unchanged start times, nondecreasing counts and an unchanged
+                        bucket layout. Each point <code>count</code> increment is the number of
+                        completed requests, and every ordinary point has an integer{' '}
+                        <code>{HTTP_STATUS_ATTRIBUTE}</code>. Exponential histograms, resets,
+                        latency and routes are not analyzed.
+                      </p>
+                    ) : mode === 'http' ? (
+                      <p>
+                        One complete delta interval of an explicit-bucket <code>{HTTP_METRIC}</code>{' '}
+                        Histogram. Each point <code>count</code> is the number of completed
+                        requests, and every ordinary point has an integer{' '}
+                        <code>{HTTP_STATUS_ATTRIBUTE}</code>. Cumulative and exponential histograms,
+                        latency and routes are not analyzed.
+                      </p>
+                    ) : (
+                      <p>
+                        A synchronous monotonic integer Sum, one complete delta interval or a
+                        compatible cumulative pair, and a boolean outcome on every ordinary
+                        measurement point.
+                      </p>
+                    )}
+                    <p>
+                      SDK overflow must have exactly one measurement attribute:{' '}
+                      <code>otel.metric.overflow = true</code>. Resource and scope attributes may
+                      remain. Cardinality Guardian can add the same marker while preserving
+                      measurement attributes; that shape is rejected.
+                    </p>
+                    <p>
+                      This analysis covers the imported interval. It does not establish a monthly
+                      SLO or prove export completeness.
+                    </p>
+                  </details>
+                  <button
+                    type="button"
+                    className="export-button"
+                    disabled={!result || !source || (isPaired(mode) && !afterSource)}
+                    onClick={exportReport}
+                  >
+                    Export explanatory JSON <span>↓</span>
+                  </button>
+                  <p className="fine">
+                    Includes exact counts and fractions, identity, interval, assumptions, source
+                    SHA-256 and calculation inputs. Cumulative reports include both source hashes
+                    and per-point increments.
                   </p>
-                </div>
-                <div>
-                  <span>UPPER BOUND</span>
-                  <code>(E + O) / T</code>
-                  {valid?.upper && <p>{fraction(valid.upper)}</p>}
-                  <p>
-                    {isHttp(mode)
-                      ? 'Every overflow request is an HTTP 5xx response.'
-                      : 'All overflow requests fail.'}
-                  </p>
-                </div>
-              </div>
-              <p>
-                These extremes are attainable under the stated assumptions. They describe what is
-                possible, not how likely it is. No missing outcome attributes are recovered.
-              </p>
-              {valid && (
-                <p className="fine">
-                  Exact threshold fraction: <code>{fraction(valid.threshold)}</code>. Display
-                  rounding never affects the verdict.
-                </p>
-              )}
-              <details>
-                <summary>When this model applies</summary>
-                {mode === 'http-cumulative' ? (
-                  <p>
-                    Two complete cumulative exports of the same explicit-bucket{' '}
-                    <code>{HTTP_METRIC}</code> Histogram from one continuous history, with the same
-                    series, unchanged start times, nondecreasing counts and an unchanged bucket
-                    layout. Each point <code>count</code> increment is the number of completed
-                    requests, and every ordinary point has an integer{' '}
-                    <code>{HTTP_STATUS_ATTRIBUTE}</code>. Exponential histograms, resets, latency
-                    and routes are not analyzed.
-                  </p>
-                ) : mode === 'http' ? (
-                  <p>
-                    One complete delta interval of an explicit-bucket <code>{HTTP_METRIC}</code>{' '}
-                    Histogram. Each point <code>count</code> is the number of completed requests,
-                    and every ordinary point has an integer <code>{HTTP_STATUS_ATTRIBUTE}</code>.
-                    Cumulative and exponential histograms, latency and routes are not analyzed.
-                  </p>
-                ) : (
-                  <p>
-                    A synchronous monotonic integer Sum, one complete delta interval or a compatible
-                    cumulative pair, and a boolean outcome on every ordinary measurement point.
-                  </p>
-                )}
-                <p>
-                  SDK overflow must have exactly one measurement attribute:{' '}
-                  <code>otel.metric.overflow = true</code>. Resource and scope attributes may
-                  remain. Cardinality Guardian can add the same marker while preserving measurement
-                  attributes; that shape is rejected.
-                </p>
-                <p>
-                  This analysis covers the imported interval. It does not establish a monthly SLO or
-                  prove export completeness.
-                </p>
-              </details>
-              <button
-                type="button"
-                className="export-button"
-                disabled={!result || !source || (isPaired(mode) && !afterSource)}
-                onClick={exportReport}
-              >
-                Export explanatory JSON <span>↓</span>
-              </button>
-              <p className="fine">
-                Includes exact counts and fractions, identity, interval, assumptions, source SHA-256
-                and calculation inputs. Cumulative reports include both source hashes and per-point
-                increments.
-              </p>
-            </section>
+                </section>
+              </>
+            )}
           </div>
         </div>
         <footer>

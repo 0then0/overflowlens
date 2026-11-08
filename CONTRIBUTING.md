@@ -63,6 +63,8 @@ The Collector lab needs Docker and is separate from every other check. `npm run 
 
 `validate:http-cumulative` runs the cumulative otelhttp experiment, rewrites the `http-cumulative-*.json` files and `cumulative-manifest.json` in `fixtures/http/` and checks them (see [SDK validation](docs/validation.md#cumulative-http-5xx-window-validation)). It does not touch the delta fixtures.
 
+`validate:http-route` runs the route slow-share experiment, rewrites the `route-*.json` files and `route-manifest.json` in `fixtures/http/` and checks them (see [SDK validation](docs/validation.md#route-slow-share-validation)). It records known durations directly through the Metric API and does not touch the other HTTP fixtures.
+
 `validate:sdk` rewrites SDK fixtures. Run it separately from tests that read those files. Review those changes as captured exports, preserving their bytes. See [SDK validation](docs/validation.md) for expected results and the distinction between real exports and synthetic controls.
 
 ## Dependency updates

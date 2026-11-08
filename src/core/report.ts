@@ -4,6 +4,12 @@ import type { HttpSettings } from './http';
 import { type HttpCumulativeSettings, pairHttpCumulative } from './httpCumulative';
 import { canonical } from './parse';
 import {
+  ROUTE_CHECKS,
+  type RouteSlowAnalysis,
+  type RouteSlowPreparation,
+  type RouteSlowSettings,
+} from './routeSlow';
+import {
   type Analysis,
   CONTRACT,
   CUMULATIVE_CONTRACT,
@@ -11,6 +17,8 @@ import {
   HTTP_CRITERION,
   HTTP_CUMULATIVE_CONTRACT,
   HTTP_METRIC,
+  HTTP_ROUTE_ATTRIBUTE,
+  HTTP_ROUTE_CONTRACT,
   HTTP_STATUS_ATTRIBUTE,
   type Stream,
 } from './types';
@@ -344,6 +352,137 @@ export function makeHttpCumulativeReport(
           'Hashes identify bytes, not authenticity, completeness or continuous source history.',
           'Latency, routes and bucket contents are not analyzed. Bounds describe possible allocations, not a confidence interval.',
           'Endpoint witnesses allocate window overflow increments; exemplars cannot recover all statuses.',
+        ],
+      }),
+    ),
+    null,
+    2,
+  );
+}
+
+export const HTTP_ROUTE_CONDITIONS = [
+  'The interval is complete: no point of the selected stream was dropped before this export.',
+  'Each histogram observation corresponds to exactly one completed HTTP request.',
+  'The recorded duration and the http.route of every request are correct.',
+  'The overflow point has genuine SDK cardinality overflow semantics.',
+  'Downstream processing changed neither counts, buckets nor attribution.',
+];
+
+// Schema v5: the slow-request share of one route in a delta duration histogram.
+// Schemas v1 to v4 are unchanged.
+export function makeRouteSlowReport(
+  stream: Stream,
+  settings: RouteSlowSettings,
+  prepared: RouteSlowPreparation,
+  result: RouteSlowAnalysis,
+  source: Source,
+) {
+  const interval = stream.intervals.find((i) => i.id === settings.intervalId);
+  const counted = 'K' in result;
+  const bounded = counted && result.lower !== null;
+  const plain = (value: unknown) =>
+    JSON.parse(
+      JSON.stringify(value, (_key, v: unknown) => (typeof v === 'bigint' ? v.toString() : v)),
+    );
+  return JSON.stringify(
+    JSON.parse(
+      canonical({
+        reportVersion: '5',
+        application: { name: 'OverflowLens', version: '0.4.0' },
+        mode: 'http-route-slow-share-histogram',
+        source,
+        identity: stream.identity,
+        inputMetric: {
+          name: stream.identity.name,
+          type: 'Histogram',
+          buckets: 'explicit',
+          temporality: stream.identity.temporality,
+          unit: stream.identity.unit,
+          expectedName: HTTP_METRIC,
+          expectedUnit: 's',
+          countMeaning: 'count of each datapoint is the number of completed HTTP requests',
+          usedFields: 'count, bucketCounts, explicitBounds, attributes',
+          notUsed:
+            'sum, min, max and exemplars are validated but never used to reconstruct buckets',
+        },
+        selection: {
+          route: { attribute: HTTP_ROUTE_ATTRIBUTE, value: settings.route, match: 'exact string' },
+          durationThreshold: {
+            seconds: settings.durationSeconds,
+            unit: 's',
+            slow: 'duration strictly greater than the threshold',
+            fast: 'duration less than or equal to the threshold (bucket upper bounds are inclusive)',
+            boundary: 'must be an exact explicit bound; never interpolated or rounded',
+          },
+          maximumSlowShare: { percent: settings.maxSlowPercent },
+        },
+        interval: interval
+          ? { startTimeUnixNano: interval.start, timeUnixNano: interval.end }
+          : null,
+        settings,
+        assumptions: {
+          contract: HTTP_ROUTE_CONTRACT,
+          userConfirmed: settings.contractConfirmed,
+          conditions: HTTP_ROUTE_CONDITIONS,
+          nameMatchProvesConditions: false,
+          structurallyProven: false,
+        },
+        applicability:
+          prepared.status === 'APPLICABLE'
+            ? { status: prepared.status, checks: ROUTE_CHECKS }
+            : plain(prepared),
+        // Counts accompany a verdict only; an unconfirmed or invalid request exports none.
+        counts: counted
+          ? plain({
+              K: result.K,
+              E: result.E,
+              F: result.F,
+              S: result.S,
+              otherRoutesKnown: result.other,
+              meaning: {
+                K: 'requests of the selected route among ordinary points',
+                E: 'requests of the selected route slower than the threshold among ordinary points',
+                F: 'SDK overflow observations not slower than the threshold; their route is unknown',
+                S: 'SDK overflow observations slower than the threshold; their route is unknown',
+                otherRoutesKnown:
+                  'ordinary observations of other routes; never part of the denominator',
+              },
+            })
+          : null,
+        model: {
+          lower: 'E / (K + F)',
+          upper: '(E + S) / (K + S)',
+          within: 'upper <= maximum slow share',
+          exceeds: 'lower > maximum slow share',
+          equalityAllowed: true,
+          noConfirmedObservations:
+            'K = 0: the data allow the route to have had no requests. No share, bound or verdict is reported.',
+          definedFor: 'K > 0',
+        },
+        unknownAttribution: {
+          explanation:
+            'SDK overflow replaces the measurement attributes, including http.route, with otel.metric.overflow = true. Which overflow observations belong to the selected route is unknown. The histogram buckets still separate fast from slow overflow observations, so the route can own any number from 0 to F of the fast and from 0 to S of the slow ones; the rest belong to other routes.',
+          overflowAttributes: 'otel.metric.overflow = true',
+        },
+        result: plain({ ...result, points: undefined }),
+        points: counted ? plain(result.points) : null,
+        witnesses: bounded
+          ? {
+              lower: {
+                overflowFastOfSelectedRoute: result.F.toString(),
+                overflowSlowOfSelectedRoute: '0',
+              },
+              upper: {
+                overflowFastOfSelectedRoute: '0',
+                overflowSlowOfSelectedRoute: result.S.toString(),
+              },
+            }
+          : null,
+        limitations: [
+          'One imported delta interval, not a full SLO assessment.',
+          'The file cannot prove completeness, request semantics, route or duration correctness, or pre-transformation SDK provenance. Data lost before export cannot be detected.',
+          'Bounds describe possible allocations of the lost route attribution, not a confidence interval. Durations are not interpolated within buckets.',
+          'With no confirmed observations of the selected route, overflow may contain requests of that route, but the data cannot show that any exist.',
         ],
       }),
     ),
