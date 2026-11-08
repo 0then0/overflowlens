@@ -27,7 +27,7 @@ export function makeReport(stream: Stream, settings: Settings, result: Analysis,
   const interval = stream.intervals.find((i) => i.id === settings.intervalId);
   const report = {
     reportVersion: '1',
-    application: { name: 'OverflowLens', version: '0.4.0' },
+    application: { name: 'OverflowLens', version: '0.5.0' },
     source,
     identity: stream.identity,
     interval: interval ? { startTimeUnixNano: interval.start, timeUnixNano: interval.end } : null,
@@ -84,7 +84,7 @@ export function makeCumulativeReport(
     JSON.parse(
       canonical({
         reportVersion: '2',
-        application: { name: 'OverflowLens', version: '0.4.0' },
+        application: { name: 'OverflowLens', version: '0.5.0' },
         mode: 'cumulative',
         sources,
         identity: before.identity,
@@ -161,7 +161,7 @@ export function makeHttpReport(
   return JSON.stringify(
     {
       reportVersion: '3',
-      application: { name: 'OverflowLens', version: '0.4.0' },
+      application: { name: 'OverflowLens', version: '0.5.0' },
       mode: 'http-5xx-histogram',
       source,
       identity: stream.identity,
@@ -266,7 +266,7 @@ export function makeHttpCumulativeReport(
     JSON.parse(
       canonical({
         reportVersion: '4',
-        application: { name: 'OverflowLens', version: '0.4.0' },
+        application: { name: 'OverflowLens', version: '0.5.0' },
         mode: 'http-5xx-histogram-cumulative',
         sources,
         identity: before.identity,
@@ -388,7 +388,7 @@ export function makeRouteSlowReport(
     JSON.parse(
       canonical({
         reportVersion: '5',
-        application: { name: 'OverflowLens', version: '0.4.0' },
+        application: { name: 'OverflowLens', version: '0.5.0' },
         mode: 'http-route-slow-share-histogram',
         source,
         identity: stream.identity,

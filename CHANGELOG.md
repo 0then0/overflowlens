@@ -4,7 +4,9 @@ This file summarizes user-visible changes. Detailed compatibility and launch ins
 
 ## Unreleased
 
-- Add a route slow-share mode for delta `http.server.request.duration` histograms (unit `s`): after SDK overflow, bound the share of requests of one exact `http.route` that are slower than a chosen explicit bucket boundary. Overflow keeps its buckets but loses the route, so the bounds are `E / (K + F)` … `(E + S) / (K + S)`, with other routes excluded from the denominator. With no known request of the route, no share or verdict is reported. Reports use schema v5. Existing modes and schemas v1 to v4 are unchanged.
+## [0.5.0](docs/releases/v0.5.0.md)
+
+- Add a route slow-share mode for delta `http.server.request.duration` histograms (unit `s`): after SDK overflow, bound the share of requests of one exact `http.route` that are slower than a chosen explicit bucket boundary. Overflow keeps its buckets but loses the route, so the bounds are `E / (K + F)` … `(E + S) / (K + S)`, with other routes excluded from the denominator. With no known request of the route, no share or verdict is reported. Reports use schema v5 and record application version 0.5.0. Existing modes and schemas v1 to v4 are unchanged.
 - Validate it with a real OpenTelemetry Go SDK Histogram with known durations recorded through the Metric API, a small cardinality limit, a no-overflow control, a boundary case and a case without observations of the selected route (`npm run validate:http-route`). This is SDK aggregation validation, not a measurement of real HTTP latency.
 
 ## [0.4.0](docs/releases/v0.4.0.md)

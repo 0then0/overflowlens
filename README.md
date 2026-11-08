@@ -161,6 +161,7 @@ The source build writes application files into `dist/`. Serve that directory loc
 - [Changelog](CHANGELOG.md): released features and unreleased changes.
 - [Security policy](SECURITY.md): supported versions, reporting and the local-processing security model.
 - [Code of conduct](CODE_OF_CONDUCT.md): participation and moderation rules.
+- [v0.5.0 release notes](docs/releases/v0.5.0.md): route slow share.
 - [v0.4.0 release notes](docs/releases/v0.4.0.md): cumulative HTTP 5xx window.
 - [v0.3.0 release notes](docs/releases/v0.3.0.md): HTTP 5xx histogram mode.
 - [v0.2.1 release notes](docs/releases/v0.2.1.md): visual refresh and Collector validation.
