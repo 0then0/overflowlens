@@ -1,5 +1,6 @@
 import type { Settings } from './analyze';
 import { type CumulativeSettings, type MatchedPoint, pairCumulative } from './cumulative';
+import { LOG2_TOLERANCE, MAX_SCALE, MIN_SCALE } from './exponential';
 import type { HttpSettings } from './http';
 import { type HttpCumulativeSettings, pairHttpCumulative } from './httpCumulative';
 import { canonical } from './parse';
@@ -19,6 +20,7 @@ import {
   HTTP_METRIC,
   HTTP_ROUTE_ATTRIBUTE,
   HTTP_ROUTE_CONTRACT,
+  HTTP_ROUTE_EXPONENTIAL_CONTRACT,
   HTTP_STATUS_ATTRIBUTE,
   type Stream,
 } from './types';
@@ -368,8 +370,9 @@ export const HTTP_ROUTE_CONDITIONS = [
   'Downstream processing changed neither counts, buckets nor attribution.',
 ];
 
-// Schema v5: the slow-request share of one route in a delta duration histogram.
-// Schemas v1 to v4 are unchanged.
+// Schema v5: the slow-request share of one route in a delta explicit-bucket duration
+// histogram. Schema v6 is the same question for an ExponentialHistogram. Schemas v1 to v5
+// are unchanged.
 export function makeRouteSlowReport(
   stream: Stream,
   settings: RouteSlowSettings,
@@ -377,6 +380,8 @@ export function makeRouteSlowReport(
   result: RouteSlowAnalysis,
   source: Source,
 ) {
+  if (stream.identity.type === 'exponentialHistogram')
+    return makeRouteSlowExponentialReport(stream, settings, prepared, result, source);
   const interval = stream.intervals.find((i) => i.id === settings.intervalId);
   const counted = 'K' in result;
   const bounded = counted && result.lower !== null;
@@ -464,7 +469,14 @@ export function makeRouteSlowReport(
             'SDK overflow replaces the measurement attributes, including http.route, with otel.metric.overflow = true. Which overflow observations belong to the selected route is unknown. The histogram buckets still separate fast from slow overflow observations, so the route can own any number from 0 to F of the fast and from 0 to S of the slow ones; the rest belong to other routes.',
           overflowAttributes: 'otel.metric.overflow = true',
         },
-        result: plain({ ...result, points: undefined }),
+        // B, X and histogram are always 0, 0 and explicit here and are left out of v5.
+        result: plain({
+          ...result,
+          points: undefined,
+          B: undefined,
+          X: undefined,
+          histogram: undefined,
+        }),
         points: counted ? plain(result.points) : null,
         witnesses: bounded
           ? {
@@ -482,6 +494,173 @@ export function makeRouteSlowReport(
           'One imported delta interval, not a full SLO assessment.',
           'The file cannot prove completeness, request semantics, route or duration correctness, or pre-transformation SDK provenance. Data lost before export cannot be detected.',
           'Bounds describe possible allocations of the lost route attribution, not a confidence interval. Durations are not interpolated within buckets.',
+          'With no confirmed observations of the selected route, overflow may contain requests of that route, but the data cannot show that any exist.',
+        ],
+      }),
+    ),
+    null,
+    2,
+  );
+}
+
+export const HTTP_ROUTE_EXPONENTIAL_CONDITIONS = [
+  'The interval is complete: no point of the selected stream was dropped before this export.',
+  'Each histogram observation corresponds to exactly one completed HTTP request.',
+  'The recorded duration and the http.route of every request are correct, and each observation is in the bucket of its exact value.',
+  'The overflow point has genuine SDK cardinality overflow semantics.',
+  'Downstream processing changed neither counts, buckets, scale nor attribution.',
+];
+
+// Schema v6: the slow-request share of one route in a delta ExponentialHistogram.
+function makeRouteSlowExponentialReport(
+  stream: Stream,
+  settings: RouteSlowSettings,
+  prepared: RouteSlowPreparation,
+  result: RouteSlowAnalysis,
+  source: Source,
+) {
+  const interval = stream.intervals.find((i) => i.id === settings.intervalId);
+  const counted = 'K' in result;
+  const bounded = counted && result.lower !== null;
+  const plain = (value: unknown) =>
+    JSON.parse(
+      JSON.stringify(value, (_key, v: unknown) => (typeof v === 'bigint' ? v.toString() : v)),
+    );
+  return JSON.stringify(
+    JSON.parse(
+      canonical({
+        reportVersion: '6',
+        application: { name: 'OverflowLens', version: '0.5.0' },
+        mode: 'http-route-slow-share-exponential-histogram',
+        source,
+        identity: stream.identity,
+        inputMetric: {
+          name: stream.identity.name,
+          type: 'ExponentialHistogram',
+          temporality: stream.identity.temporality,
+          unit: stream.identity.unit,
+          expectedName: HTTP_METRIC,
+          expectedUnit: 's',
+          countMeaning: 'count of each datapoint is the number of completed HTTP requests',
+          usedFields:
+            'count, scale, zeroCount, zeroThreshold, positive and negative offsets and bucketCounts, attributes',
+          notUsed: 'sum, min, max and exemplars are validated but never used to narrow the bounds',
+          supportedScales: `${MIN_SCALE} to ${MAX_SCALE}`,
+        },
+        selection: {
+          route: { attribute: HTTP_ROUTE_ATTRIBUTE, value: settings.route, match: 'exact string' },
+          durationThreshold: {
+            seconds: settings.durationSeconds,
+            unit: 's',
+            exactValue: 'the typed decimal, compared as an exact rational number',
+            slow: 'duration strictly greater than the threshold',
+            fast: 'duration less than or equal to the threshold',
+          },
+          maximumSlowShare: { percent: settings.maxSlowPercent },
+        },
+        interval: interval
+          ? { startTimeUnixNano: interval.start, timeUnixNano: interval.end }
+          : null,
+        settings,
+        assumptions: {
+          contract: HTTP_ROUTE_EXPONENTIAL_CONTRACT,
+          userConfirmed: settings.contractConfirmed,
+          conditions: HTTP_ROUTE_EXPONENTIAL_CONDITIONS,
+          nameMatchProvesConditions: false,
+          overflowMarkerProvesProvenance: false,
+          structurallyProven: false,
+        },
+        applicability:
+          prepared.status === 'APPLICABLE'
+            ? { status: prepared.status, checks: prepared.checks }
+            : plain(prepared),
+        bucketSemantics: {
+          base: 'base = 2^(2^-scale), using the scale of each point; points are never rescaled or merged',
+          positiveBucket:
+            'index i = offset + array position holds values v with base^i < v <= base^(i+1)',
+          zeroBucket:
+            'values with |v| <= zeroThreshold; with zeroThreshold 0, zero and values below 2^-1022 that the exponential formula cannot express',
+          negativeBuckets: 'must be empty: a non-empty negative bucket refuses the calculation',
+          fast: 'every value the bucket admits is <= threshold (upper bound <= threshold)',
+          slow: 'every value the bucket admits is > threshold (lower bound >= threshold)',
+          uncertain:
+            'the bucket admits values on both sides of the threshold, or the comparison is within the numerical tolerance',
+          comparison: `exact rational comparison when a bound is a power of two (integer exponent); otherwise the bound is irrational and the sign of index / 2^scale - log2(threshold) is used only when it exceeds ${LOG2_TOLERANCE} (2^-30)`,
+        },
+        // Counts accompany a verdict only; an unconfirmed or invalid request exports none.
+        counts: counted
+          ? plain({
+              K: result.K,
+              L: result.E,
+              U: result.E + result.B,
+              F_max: result.F + result.X,
+              S_max: result.S + result.X,
+              knownSlow: result.E,
+              knownUncertain: result.B,
+              overflowFast: result.F,
+              overflowSlow: result.S,
+              overflowUncertain: result.X,
+              otherRoutesKnown: result.other,
+              uncertainFromThreshold: result.B + result.X,
+              uncertainFromLostRoute: result.F + result.S + result.X,
+              meaning: {
+                K: 'requests of the selected route among ordinary points',
+                L: 'requests of the selected route that are certainly slower than the threshold',
+                U: 'requests of the selected route that may be slower than the threshold (L + knownUncertain)',
+                F_max:
+                  'SDK overflow observations that may be not slower than the threshold (overflowFast + overflowUncertain)',
+                S_max:
+                  'SDK overflow observations that may be slower than the threshold (overflowSlow + overflowUncertain)',
+                knownUncertain:
+                  'requests of the selected route in buckets that admit both sides of the threshold',
+                overflowUncertain:
+                  'SDK overflow observations in buckets that admit both sides of the threshold',
+                otherRoutesKnown:
+                  'ordinary observations of other routes; never part of the denominator',
+                uncertainFromThreshold:
+                  'observations whose side of the threshold is unknown because their bucket crosses it',
+                uncertainFromLostRoute: 'SDK overflow observations, whose http.route is unknown',
+              },
+            })
+          : null,
+        model: {
+          lower: 'L / (K + F_max)',
+          upper: '(U + S_max) / (K + S_max)',
+          within: 'upper <= maximum slow share',
+          exceeds: 'lower > maximum slow share',
+          equalityAllowed: true,
+          noConfirmedObservations:
+            'K = 0: the data allow the route to have had no requests. No share, bound or verdict is reported.',
+          definedFor: 'K > 0',
+        },
+        unknownAttribution: {
+          explanation:
+            'SDK overflow replaces the measurement attributes, including http.route, with otel.metric.overflow = true. Which overflow observations belong to the selected route is unknown. Its buckets still separate certainly fast, certainly slow and uncertain observations. Each bound is one consistent assignment: for the lower bound, every uncertain observation is fast and every fast overflow observation belongs to the route; for the upper bound, every uncertain observation is slow and every slow overflow observation belongs to the route. No observation is counted on both sides in one assignment.',
+          overflowAttributes: 'otel.metric.overflow = true',
+        },
+        result: plain({ ...result, points: undefined }),
+        points: counted ? plain(result.points) : null,
+        witnesses: bounded
+          ? {
+              lower: {
+                knownSlowOfSelectedRoute: result.E.toString(),
+                knownUncertainResolvedAs: 'fast',
+                overflowFastOfSelectedRoute: (result.F + result.X).toString(),
+                overflowSlowOfSelectedRoute: '0',
+              },
+              upper: {
+                knownSlowOfSelectedRoute: (result.E + result.B).toString(),
+                knownUncertainResolvedAs: 'slow',
+                overflowFastOfSelectedRoute: '0',
+                overflowSlowOfSelectedRoute: (result.S + result.X).toString(),
+              },
+            }
+          : null,
+        limitations: [
+          'One imported delta interval, not a full SLO assessment.',
+          'The file cannot prove completeness, request semantics, route or duration correctness, or pre-transformation SDK provenance. Data lost before export cannot be detected.',
+          'Bounds describe possible allocations of buckets that cross the threshold and of the lost route attribution, not a confidence interval. Durations are not interpolated, and sum, min, max and exemplars do not narrow the range.',
+          'The data model lets producers place a value within floating-point rounding of a bucket boundary in the adjacent bucket; that is covered by the duration-correctness assumption.',
           'With no confirmed observations of the selected route, overflow may contain requests of that route, but the data cannot show that any exist.',
         ],
       }),

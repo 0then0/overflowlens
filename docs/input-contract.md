@@ -107,7 +107,7 @@ Structural applicability is checked before the provenance confirmation, which st
 
 ## Route slow share
 
-The fifth mode, **HTTP route slow share (delta)**, bounds the share of requests of one exact `http.route` that took longer than a chosen duration, after SDK overflow. It analyzes one complete delta interval of one Resource/scope/metric stream: `http.server.request.duration`, an explicit-bucket `Histogram`, `aggregationTemporality: 1`, with unit exactly `s`. Another unit (`ms`, none) is refused with `UNSUPPORTED_UNIT`; values are never converted. Cumulative histograms, exponential histograms and other metrics are refused. Histogram points are validated by the rules of the [HTTP 5xx histogram](#http-5xx-histogram) mode (flags, `count`, buckets, `sum`, `min`, `max`), and every point of the selected stream is validated before the route is considered.
+The fifth mode, **HTTP route slow share (delta)**, bounds the share of requests of one exact `http.route` that took longer than a chosen duration, after SDK overflow. It analyzes one complete delta interval of one Resource/scope/metric stream: `http.server.request.duration`, an explicit-bucket `Histogram`, `aggregationTemporality: 1`, with unit exactly `s`. Another unit (`ms`, none) is refused with `UNSUPPORTED_UNIT`; values are never converted. A delta `ExponentialHistogram` is accepted as described in [Exponential route slow share](#exponential-route-slow-share); cumulative histograms and other metrics are refused. Histogram points are validated by the rules of the [HTTP 5xx histogram](#http-5xx-histogram) mode (flags, `count`, buckets, `sum`, `min`, `max`), and every point of the selected stream is validated before the route is considered.
 
 - **Overflow** follows the strict shape in [SDK overflow](#sdk-overflow-and-provenance): one attribute, `otel.metric.overflow = true`. Its observations are split by the duration boundary into `F` (not slower) and `S` (slower).
 - **Ordinary points** that are non-empty need exactly one `http.route` `stringValue`, nonempty. A missing, non-string or empty route refuses the whole calculation (`MISSING_ROUTE`, `INVALID_ROUTE`), even on a point of another route, because that point could belong to the selected route. The route is matched as an exact string; it is never derived from a URL, an endpoint name or another attribute. An empty ordinary point does not need a route. `http.response.status_code` is not required or used.
@@ -118,6 +118,27 @@ The fifth mode, **HTTP route slow share (delta)**, bounds the share of requests 
 `K` and `E` are the requests and the slow requests of the selected route among ordinary points, and `F` and `S` are the fast and slow overflow observations. Known observations of other routes are reported as `otherRoutesKnown` and never enter a denominator. With `K = 0` the result is `NO_ROUTE_OBSERVATIONS`: the data allow the route to have had no requests, so no share, bounds or verdict is reported, even when the overflow is not empty. The mode refuses a route or threshold that is not selected (`ROUTE_NOT_SELECTED`, `DURATION_NOT_SELECTED`). The route may be typed, including a route that occurs in no ordinary point.
 
 The confirmation states that the interval is complete, each histogram observation is one completed request, the recorded duration and `http.route` of every request are correct, the overflow has genuine SDK overflow semantics, and downstream processing changed neither counts, buckets nor attribution. Data lost before the export cannot be detected. Structural applicability is checked before the confirmation. Preparation of the counts is reused while only the maximum share or the confirmation changes; a change of file, stream, interval, route or duration threshold clears the confirmation and the result.
+
+### Exponential route slow share
+
+A delta `exponentialHistogram` of `http.server.request.duration` with unit `s` uses the same route, overflow, duplicate-point, interval and provenance rules. Every point of the stream is validated at import, following the [data model](https://opentelemetry.io/docs/specs/otel/metrics/data-model/#exponentialhistogram) and the [OTLP proto](https://github.com/open-telemetry/opentelemetry-proto/blob/main/opentelemetry/proto/metrics/v1/metrics.proto):
+
+- `count`, `zeroCount` and every `bucketCounts` entry are exact unsigned 64-bit decimal integers, and `count = zeroCount + Σ positive + Σ negative` (`BUCKET_COUNT_MISMATCH`). Omitted proto3 fields are zero.
+- `scale` is a signed 32-bit integer from −10 to 20 (`UNSUPPORTED_SCALE`); `offset` is a signed 32-bit integer, and the last index `offset + length − 1` must stay within that range. A non-empty bucket must be able to hold a finite double: its exclusive lower bound below 2^1024 and its upper bound at least 2^−1074 (`INVALID_BUCKET_INDEX`). Each range has at most 16,384 buckets (`TOO_MANY_BUCKETS`).
+- `zeroThreshold` is a finite double ≥ 0 (`INVALID_ZERO_THRESHOLD`). `flags`, `sum`, `min`, `max` and exemplars follow the explicit-bucket rules.
+- Non-empty negative buckets refuse the calculation (`NEGATIVE_DURATIONS`) on any point, because an HTTP duration cannot be negative. Empty negative ranges are accepted.
+
+Bucket `i = offset + position` of the positive range holds values `v` with `base^i < v ≤ base^(i+1)`, `base = 2^(2^−scale)`, using the scale of its own point; points are never rescaled or merged. The zero bucket holds `|v| ≤ zeroThreshold`. With `zeroThreshold` 0 it holds zero and values the formula cannot express, which OverflowLens takes to be below the smallest normal double 2^−1022.
+
+The threshold is typed as a decimal number of seconds no smaller than the smallest normal double 2^−1022 (at most 64 characters, for example `0.3` or `3e-1`; `INVALID_DURATION_THRESHOLD` otherwise) and compared as the exact decimal it denotes. Slow means strictly greater than it. Each non-empty bucket is classified as:
+
+- **fast** when its upper bound is at most the threshold;
+- **slow** when its lower bound is at least the threshold;
+- **uncertain** otherwise: the bucket admits values on both sides.
+
+A bound with an integer exponent is a power of two and is compared exactly. Every other bound is irrational and cannot equal a decimal threshold; its side is decided from `index / 2^scale − log2(threshold)` only when that difference exceeds 2^−30, and the bucket is uncertain otherwise. The zero bucket is fast when its upper end (the exact value of the stored `zeroThreshold` double, or 2^−1022) is at most the threshold, and uncertain otherwise.
+
+The data model lets producers place a value within floating-point rounding of a boundary in the adjacent bucket. The confirmation therefore also states that every observation is in the bucket of its value. The interface shows the uncertain counts from threshold crossing (`B`, known; `X`, overflow) and from route loss (all overflow observations). `sum`, `min`, `max` and exemplars never narrow the range. Reports use schema v6.
 
 ## Attribute values
 
@@ -160,6 +181,8 @@ These are user assumptions. Matching metadata and source hashes cannot prove com
 Refusals contain a diagnostic code, explanation and path when available. They are distinct from mathematical uncertainty. A structurally applicable pair can still be refused for unconfirmed provenance or an invalid threshold. See [mathematics](mathematics.md) for exact decisions and endpoint witnesses.
 
 ## Reports and state
+
+Exponential route slow-share schema v6 adds `mode: http-route-slow-share-exponential-histogram`, the typed threshold, `bucketSemantics`, `counts` (`K`, `L`, `U`, `F_max`, `S_max`, their known and overflow components, `otherRoutesKnown`, `uncertainFromThreshold` and `uncertainFromLostRoute`), the `model` formulas, both witnesses, and for every relevant point its role, fast, slow and uncertain counts, `scale`, `zeroThreshold`, `zeroCount`, positive offset and bucket counts, the zero-bucket class and every crossing bucket with its reason. The bounds can be replayed from `counts` and checked against the points. `assumptions.overflowMarkerProvesProvenance` is `false`. A refusal keeps diagnostics and settings without counts; `NO_ROUTE_OBSERVATIONS` exports no bounds or witnesses. Schema v5 is unchanged for explicit-bucket histograms.
 
 Route slow-share schema v5 adds `mode: http-route-slow-share-histogram`, the source name, size and SHA-256, `inputMetric`, `selection` (route attribute and exact value, duration threshold in seconds with the slow and fast definitions, maximum share), `assumptions.conditions` with the confirmation, `applicability` (checks or the refusal), `counts` (`K`, `E`, `F`, `S`, `otherRoutesKnown`), the `model` formulas, an `unknownAttribution` explanation, `result` with exact fractions, per-point `points` (role, count, fast and slow counts) and the lower and upper witnesses. `NO_ROUTE_OBSERVATIONS` exports no bounds, verdict or witnesses; a refusal keeps diagnostics and settings without counts. Schemas v1 to v4 are unchanged.
 

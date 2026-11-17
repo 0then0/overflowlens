@@ -1,3 +1,4 @@
+import { readExponentialPoint } from './exponential';
 import { readHistogramPoint } from './histogram';
 import { array, attributes, canonical, integer, materializeNumbers, object, string } from './parse';
 import {
@@ -62,7 +63,7 @@ export function normalize(raw: unknown): ImportData {
               const type = present.length === 1 ? present[0] : 'unknown';
               const data = type === 'unknown' ? {} : object(m[type], `${mp}.${type}`);
               const temporality =
-                type === 'sum' || type === 'histogram'
+                type === 'sum' || type === 'histogram' || type === 'exponentialHistogram'
                   ? enumTemporality(data.aggregationTemporality, mp)
                   : 'N/A';
               const identity: Identity = {
@@ -74,7 +75,10 @@ export function normalize(raw: unknown): ImportData {
                 type,
                 unit: string(m.unit, `${mp}.unit`),
                 temporality,
-                monotonic: type === 'histogram' ? false : data.isMonotonic === true,
+                monotonic:
+                  type === 'histogram' || type === 'exponentialHistogram'
+                    ? false
+                    : data.isMonotonic === true,
               };
               if (!identity.name)
                 fail('MISSING_METRIC_NAME', 'A metric needs a nonempty name.', mp);
@@ -93,10 +97,10 @@ export function normalize(raw: unknown): ImportData {
               try {
                 if (present.length > 1)
                   fail('MULTIPLE_METRIC_TYPES', 'Metric has multiple data types.', mp);
-                if (type !== 'sum' && type !== 'histogram')
+                if (type !== 'sum' && type !== 'histogram' && type !== 'exponentialHistogram')
                   fail(
                     'UNSUPPORTED_TYPE',
-                    'Only monotonic integer Sum request counters and explicit-bucket HTTP duration Histograms are supported.',
+                    'Only monotonic integer Sum request counters and HTTP duration Histograms (explicit-bucket or exponential) are supported.',
                     mp,
                     'UNSUPPORTED_INPUT',
                   );
@@ -135,6 +139,7 @@ export function normalize(raw: unknown): ImportData {
                   if (start <= 0n || end <= start)
                     fail('INVALID_INTERVAL', 'Require 0 < startTimeUnixNano < timeUnixNano.', pp);
                   if (type === 'histogram') readHistogramPoint(point, pp);
+                  else if (type === 'exponentialHistogram') readExponentialPoint(point, pp);
                   else {
                     if (point.asDouble != null)
                       fail(

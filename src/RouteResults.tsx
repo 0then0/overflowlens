@@ -40,6 +40,11 @@ export function RouteResults({
   const valid = result && 'K' in result ? result : null;
   const bounded = valid?.lower && valid.upper ? { lower: valid.lower, upper: valid.upper } : null;
   const limit = durationSeconds ? threshold(durationSeconds) : 'the threshold';
+  const exponential = stream?.identity.type === 'exponentialHistogram';
+  // Observations whose side of the threshold, or whose route, is unknown.
+  const fromThreshold = valid ? valid.B + valid.X : 0n;
+  const fromRoute = valid ? valid.F + valid.S + valid.X : 0n;
+  const uncertain = fromThreshold + fromRoute > 0n;
   return (
     <>
       <section
@@ -78,15 +83,17 @@ export function RouteResults({
                   {formatPercent(bounded.lower)} <span>…</span> {formatPercent(bounded.upper)}
                 </div>
                 <p className="range-caption">
-                  {valid.F + valid.S > 0n
+                  {uncertain
                     ? 'Possible true share of slow requests · nonzero uncertainty'
-                    : 'Exact share of slow requests · no overflow observations'}
+                    : exponential
+                      ? 'Exact share of slow requests · no overflow or threshold-crossing observations'
+                      : 'Exact share of slow requests · no overflow observations'}
                 </p>
                 <Range
                   lower={bounded.lower}
                   upper={bounded.upper}
                   threshold={valid.maximum}
-                  uncertain={valid.F + valid.S > 0n}
+                  uncertain={uncertain}
                   subject="slow-request share"
                 />
                 <div className="explanation">
@@ -94,23 +101,46 @@ export function RouteResults({
                     {valid.status === 'INDETERMINATE'
                       ? 'Both outcomes remain possible.'
                       : valid.status === 'WITHIN_LIMIT'
-                        ? 'Every possible assignment of the overflow meets your limit.'
-                        : 'Every possible assignment of the overflow exceeds your limit.'}
+                        ? `Every possible assignment of the ${exponential ? 'uncertain observations and the ' : ''}overflow meets your limit.`
+                        : `Every possible assignment of the ${exponential ? 'uncertain observations and the ' : ''}overflow exceeds your limit.`}
                   </strong>
                   <p>
-                    {valid.status === 'INDETERMINATE'
-                      ? 'Some assignments of the overflow observations to this route meet the limit, and others exceed it. These data cannot settle the question.'
-                      : valid.status === 'WITHIN_LIMIT'
-                        ? `Even if every slow overflow observation belonged to ${route} and no fast one did, the share of its requests longer than ${limit} would stay at or below the maximum.`
-                        : `The known slow requests of ${route} alone exceed the maximum, even if every fast overflow observation belonged to it and no slow one did.`}
+                    {exponential
+                      ? valid.status === 'INDETERMINATE'
+                        ? 'Some ways of resolving the threshold-crossing buckets and assigning the overflow to this route meet the limit, and others exceed it. These data cannot settle the question.'
+                        : valid.status === 'WITHIN_LIMIT'
+                          ? `Even if every uncertain observation were longer than ${limit}, every possibly slow overflow observation belonged to ${route} and no fast one did, the share would stay at or below the maximum.`
+                          : `The certainly slow requests of ${route} alone exceed the maximum, even if every uncertain observation were not longer than ${limit} and every possibly fast overflow observation belonged to it.`
+                      : valid.status === 'INDETERMINATE'
+                        ? 'Some assignments of the overflow observations to this route meet the limit, and others exceed it. These data cannot settle the question.'
+                        : valid.status === 'WITHIN_LIMIT'
+                          ? `Even if every slow overflow observation belonged to ${route} and no fast one did, the share of its requests longer than ${limit} would stay at or below the maximum.`
+                          : `The known slow requests of ${route} alone exceed the maximum, even if every fast overflow observation belonged to it and no slow one did.`}
                   </p>
-                  {valid.F + valid.S > 0n && (
+                  {exponential && fromThreshold > 0n && (
+                    <p data-testid="threshold-crossing">
+                      {fromThreshold.toString()} observations ({valid.B.toString()} of {route},{' '}
+                      {valid.X.toString()} in the overflow) lie in buckets whose range contains{' '}
+                      {limit}. They may be on either side of the threshold, and their exact
+                      durations are not recorded.
+                    </p>
+                  )}
+                  {!exponential && valid.F + valid.S > 0n && (
                     <p data-testid="unknown-attribution">
                       The SDK replaced the attributes of {(valid.F + valid.S).toString()} overflow
                       observations, including <code>{HTTP_ROUTE_ATTRIBUTE}</code>. Their route is
                       unknown, so each of them may or may not belong to {route}. Their durations are
                       still sorted into buckets: {valid.F.toString()} were not longer than {limit}{' '}
                       and {valid.S.toString()} were longer.
+                    </p>
+                  )}
+                  {exponential && fromRoute > 0n && (
+                    <p data-testid="unknown-attribution">
+                      The SDK replaced the attributes of {fromRoute.toString()} overflow
+                      observations, including <code>{HTTP_ROUTE_ATTRIBUTE}</code>. Their route is
+                      unknown, so each of them may or may not belong to {route}. By bucket,{' '}
+                      {valid.F.toString()} were not longer than {limit}, {valid.S.toString()} were
+                      longer and {valid.X.toString()} may be either.
                     </p>
                   )}
                 </div>
@@ -122,9 +152,9 @@ export function RouteResults({
                 </strong>
                 <p>
                   No ordinary datapoint carries this route, so no share, bound or verdict is
-                  reported. The SDK overflow holds {(valid.F + valid.S).toString()} observations
-                  whose route is unknown. Some of them may belong to this route, but nothing in the
-                  export shows that any does, and the route may have had no requests.
+                  reported. The SDK overflow holds {fromRoute.toString()} observations whose route
+                  is unknown. Some of them may belong to this route, but nothing in the export shows
+                  that any does, and the route may have had no requests.
                 </p>
               </div>
             )}
@@ -163,25 +193,43 @@ export function RouteResults({
             </dd>
           </dl>
         )}
-        <div className="counts">
-          {(
-            [
-              ['K', 'Known route requests'],
-              ['E', 'Known slow'],
-              ['F', 'Overflow, not slower'],
-              ['S', 'Overflow, slower'],
-            ] as const
-          ).map(([key, label]) => (
+        <div className={exponential ? 'counts six' : 'counts'}>
+          {(exponential
+            ? ([
+                ['K', 'K', 'Known route requests'],
+                ['E', 'L', 'Known, certainly slower'],
+                ['B', 'B', 'Known, crossing threshold'],
+                ['F', 'F', 'Overflow, not slower'],
+                ['S', 'S', 'Overflow, slower'],
+                ['X', 'X', 'Overflow, crossing threshold'],
+              ] as const)
+            : ([
+                ['K', 'K', 'Known route requests'],
+                ['E', 'E', 'Known slow'],
+                ['F', 'F', 'Overflow, not slower'],
+                ['S', 'S', 'Overflow, slower'],
+              ] as const)
+          ).map(([key, symbol, label]) => (
             <div key={key}>
               <span>
-                {label} <code>{key}</code>
+                {label} <code>{symbol}</code>
               </span>
               <strong>{valid ? valid[key].toString() : '—'}</strong>
             </div>
           ))}
         </div>
+        {exponential && (
+          <dl className="selection" data-testid="uncertainty-sources">
+            <dt>Threshold crossing</dt>
+            <dd>{valid ? `${fromThreshold} uncertain (B + X)` : '—'}</dd>
+            <dt>Route lost</dt>
+            <dd>{valid ? `${fromRoute} uncertain (F + S + X)` : '—'}</dd>
+          </dl>
+        )}
         <p className="fine">
-          Known fast requests of the route = K − E{valid ? ` = ${valid.K - valid.E}` : ''}.{' '}
+          {exponential
+            ? `Certainly fast known requests of the route = K − L − B${valid ? ` = ${valid.K - valid.E - valid.B}` : ''}. Overflow observations in crossing buckets (X) are uncertain for both reasons and are counted in both lines. `
+            : `Known fast requests of the route = K − E${valid ? ` = ${valid.K - valid.E}` : ''}. `}
           {valid
             ? `${valid.other} known observations of other routes are excluded from every denominator.`
             : 'Observations of other routes are excluded from every denominator.'}{' '}
@@ -190,20 +238,43 @@ export function RouteResults({
       </section>
       <section className="panel method-panel">
         <h2>Bounds you can check</h2>
-        <div className="formula-row">
-          <div>
-            <span>LOWER BOUND</span>
-            <code>E / (K + F)</code>
-            {bounded && <p>{fraction(bounded.lower)}</p>}
-            <p>Every fast overflow observation belongs to the route; no slow one does.</p>
+        {exponential ? (
+          <div className="formula-row">
+            <div>
+              <span>LOWER BOUND</span>
+              <code>L / (K + F_max)</code>
+              {bounded && <p>{fraction(bounded.lower)}</p>}
+              <p>
+                L = E, F_max = F + X. Every uncertain observation is fast; every possibly fast
+                overflow observation belongs to the route, no slow one does.
+              </p>
+            </div>
+            <div>
+              <span>UPPER BOUND</span>
+              <code>(U + S_max) / (K + S_max)</code>
+              {bounded && <p>{fraction(bounded.upper)}</p>}
+              <p>
+                U = E + B, S_max = S + X. Every uncertain observation is slow; every possibly slow
+                overflow observation belongs to the route, no fast one does.
+              </p>
+            </div>
           </div>
-          <div>
-            <span>UPPER BOUND</span>
-            <code>(E + S) / (K + S)</code>
-            {bounded && <p>{fraction(bounded.upper)}</p>}
-            <p>Every slow overflow observation belongs to the route; no fast one does.</p>
+        ) : (
+          <div className="formula-row">
+            <div>
+              <span>LOWER BOUND</span>
+              <code>E / (K + F)</code>
+              {bounded && <p>{fraction(bounded.lower)}</p>}
+              <p>Every fast overflow observation belongs to the route; no slow one does.</p>
+            </div>
+            <div>
+              <span>UPPER BOUND</span>
+              <code>(E + S) / (K + S)</code>
+              {bounded && <p>{fraction(bounded.upper)}</p>}
+              <p>Every slow overflow observation belongs to the route; no fast one does.</p>
+            </div>
           </div>
-        </div>
+        )}
         <p>
           These extremes are attainable under the stated assumptions, with the remaining overflow
           observations belonging to other routes. They describe what is possible, not how likely it
@@ -218,16 +289,31 @@ export function RouteResults({
         )}
         <details>
           <summary>When this model applies</summary>
-          <p>
-            One complete delta interval of an explicit-bucket <code>{HTTP_METRIC}</code> Histogram
-            in seconds. Every ordinary non-empty point has one string{' '}
-            <code>{HTTP_ROUTE_ATTRIBUTE}</code> and complete bucket counts, and the chosen duration
-            is an exact bucket boundary of the overflow and selected-route points. Cumulative and
-            exponential histograms, status codes, quantiles and other attributes are not analyzed.
-          </p>
+          {exponential ? (
+            <p>
+              One complete delta interval of a <code>{HTTP_METRIC}</code> ExponentialHistogram in
+              seconds, scale −10 to 20. Each point keeps its own scale and offset; a bucket{' '}
+              <code>(base^i, base^(i+1)]</code> is fast when its upper bound is at most the
+              threshold, slow when its lower bound is at least the threshold, and uncertain
+              otherwise or when floating-point error could change the comparison. The zero bucket
+              covers <code>[−zeroThreshold, zeroThreshold]</code>. Negative buckets must be empty.
+              Sum, min, max and exemplars never narrow the range. Cumulative histograms, quantiles
+              and merged intervals are not analyzed.
+            </p>
+          ) : (
+            <p>
+              One complete delta interval of an explicit-bucket <code>{HTTP_METRIC}</code> Histogram
+              in seconds. Every ordinary non-empty point has one string{' '}
+              <code>{HTTP_ROUTE_ATTRIBUTE}</code> and complete bucket counts, and the chosen
+              duration is an exact bucket boundary of the overflow and selected-route points.
+              Cumulative histograms, status codes, quantiles and other attributes are not analyzed;
+              an ExponentialHistogram stream takes a typed threshold instead.
+            </p>
+          )}
           <p>
             SDK overflow must have exactly one measurement attribute:{' '}
-            <code>otel.metric.overflow = true</code>. Data lost before the export cannot be
+            <code>otel.metric.overflow = true</code>. That shape alone does not establish where the
+            point came from or that the export is complete. Data lost before the export cannot be
             detected.
           </p>
           {prepared?.status === 'APPLICABLE' && (
@@ -243,7 +329,11 @@ export function RouteResults({
         </button>
         <p className="fine">
           Includes the route, duration threshold, exact counts and fractions, identity, interval,
-          assumptions, source SHA-256 and per-point evidence.
+          assumptions, source SHA-256 and per-point evidence
+          {exponential
+            ? ', with the scale, buckets and classification of every relevant point'
+            : ''}
+          .
         </p>
       </section>
     </>

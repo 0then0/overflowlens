@@ -344,3 +344,66 @@ function httpFixtureShell(points: Record<string, unknown>[], metric: Record<stri
     ],
   };
 }
+
+export type ExpSpec = {
+  // `undefined` gets a unique default route; `null` omits the attribute.
+  route?: string | null;
+  overflow?: boolean;
+  scale?: number;
+  offset?: number;
+  // Positive bucket counts from `offset`; the point count is their sum plus zeroCount and
+  // the negative counts unless overridden.
+  buckets?: (string | number)[];
+  zeroCount?: string | number;
+  zeroThreshold?: number;
+  negative?: { offset?: number; bucketCounts: (string | number)[] };
+  count?: string | number | null;
+  attributes?: unknown[];
+  point?: Record<string, unknown>;
+};
+// Delta ExponentialHistogram http.server.request.duration in seconds. The default scale is 0:
+// bucket i holds (2^i, 2^(i+1)], so with offset -2 the buckets are (0.25, 0.5], (0.5, 1],
+// (1, 2], ...
+export function expRouteFixture(specs: ExpSpec[], metric: Record<string, unknown> = {}) {
+  const points = specs.map((spec, i) => {
+    const buckets = (spec.buckets ?? [1]).map(String);
+    const negative = (spec.negative?.bucketCounts ?? []).map(String);
+    const total = [...buckets, ...negative]
+      .reduce((n, b) => n + BigInt(b), BigInt(spec.zeroCount ?? 0))
+      .toString();
+    const attributes: unknown[] = spec.overflow
+      ? [{ key: 'otel.metric.overflow', value: { boolValue: true } }]
+      : [{ key: 'test.id', value: { intValue: String(i) } }];
+    if (!spec.overflow && spec.route !== null)
+      attributes.push({
+        key: 'http.route',
+        value: { stringValue: spec.route ?? `/default/${i}` },
+      });
+    attributes.push(...(spec.attributes ?? []));
+    const count = spec.count === undefined ? total : spec.count;
+    return {
+      attributes,
+      startTimeUnixNano: '1000000000',
+      timeUnixNano: '2000000000',
+      ...(count === null ? {} : { count }),
+      sum: total === '0' ? 0 : 0.5,
+      scale: spec.scale ?? 0,
+      ...(spec.zeroCount === undefined ? {} : { zeroCount: String(spec.zeroCount) }),
+      ...(spec.zeroThreshold === undefined ? {} : { zeroThreshold: spec.zeroThreshold }),
+      positive: { offset: spec.offset ?? -2, bucketCounts: buckets },
+      ...(spec.negative
+        ? { negative: { offset: spec.negative.offset ?? 0, bucketCounts: negative } }
+        : {}),
+      ...spec.point,
+    };
+  });
+  const shell = httpFixtureShell([], {});
+  const m = shell.resourceMetrics[0].scopeMetrics[0].metrics[0] as Record<string, unknown>;
+  delete m.histogram;
+  Object.assign(
+    m,
+    { exponentialHistogram: { aggregationTemporality: 1, dataPoints: points } },
+    metric,
+  );
+  return shell;
+}

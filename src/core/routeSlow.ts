@@ -1,5 +1,12 @@
 import { overflowShape } from './analyze';
 import { compare, thresholdPercent } from './calculate';
+import {
+  classifyExponential,
+  type ExactDuration,
+  type ExponentialClassification,
+  readExactDuration,
+  readExponentialPoint,
+} from './exponential';
 import { readHistogramPoint } from './histogram';
 import { attributes, canonical } from './parse';
 import {
@@ -21,16 +28,33 @@ import {
 //
 // Slow means strictly greater than the duration boundary. An observation equal to the
 // boundary lies in the bucket whose inclusive upper bound it is, so it counts as fast.
+//
+// An exponential histogram takes a typed threshold instead of a bucket boundary. A bucket
+// whose range contains the threshold admits observations on both sides, so its
+// observations are uncertain: B among the selected route's, X among the overflow's.
 
 export type RouteSlowSelection = { intervalId: string; route: string; durationSeconds: string };
 export type RouteSlowSettings = RouteSlowSelection & {
   maxSlowPercent: string;
   contractConfirmed: boolean;
 };
-// K and E: requests and slow requests of the selected route among ordinary points.
-// F and S: fast and slow observations in the SDK overflow, whose route is unknown.
+// K and E: requests and certainly slow requests of the selected route among ordinary points.
+// B: requests of the selected route in buckets that contain the threshold (exponential only).
+// F and S: certainly fast and slow observations in the SDK overflow, whose route is unknown.
+// X: overflow observations in buckets that contain the threshold (exponential only).
 // other: observations of other routes among ordinary points. They never enter a denominator.
-export type RouteSlowCounts = { K: bigint; E: bigint; F: bigint; S: bigint; other: bigint };
+// With L = E, U = E + B, F_max = F + X and S_max = S + X, the bounds are
+// L / (K + F_max) and (U + S_max) / (K + S_max). Explicit buckets have B = X = 0.
+export type RouteSlowCounts = {
+  K: bigint;
+  E: bigint;
+  B: bigint;
+  F: bigint;
+  S: bigint;
+  X: bigint;
+  other: bigint;
+};
+export type HistogramKind = 'explicit' | 'exponential';
 export type RoutePoint = {
   attributes: Attributes;
   count: string;
@@ -40,6 +64,15 @@ export type RoutePoint = {
   // Present for the points that take part in the calculation.
   fast?: string;
   slow?: string;
+  // Exponential points that take part in the calculation only.
+  uncertain?: string;
+  exponential?: {
+    scale: number;
+    zeroThreshold: number;
+    zeroCount: string;
+    positive: { offset: number; bucketCounts: string[] };
+    classification: Pick<ExponentialClassification, 'zero' | 'crossing'>;
+  };
 };
 type Refusal = { status: Diagnostic['status']; diagnostic: Diagnostic };
 export const ROUTE_CHECKS = [
@@ -51,8 +84,20 @@ export const ROUTE_CHECKS = [
   'complete bucket counts on every non-empty point, summing to its count',
   'the duration boundary is an exact explicit bound of the overflow and selected-route points',
 ];
+export const EXPONENTIAL_ROUTE_CHECKS = [
+  'one selected Resource, scope and metric stream; delta temporality; ExponentialHistogram',
+  'metric http.server.request.duration with unit s',
+  'one complete interval; all points of the interval validated before any route is selected',
+  'SDK overflow shape: exactly one attribute, otel.metric.overflow = true',
+  'a unique string http.route on every ordinary non-empty point',
+  'scale within -10 to 20, bucket indexes within signed 32-bit range and finite doubles',
+  'zeroCount plus positive and negative bucket counts equal count on every point',
+  'no observations in negative buckets: an HTTP duration cannot be negative',
+  'each relevant bucket is classified against the threshold with exact or tolerance-guarded comparisons',
+];
 export type RouteSlowPrepared = {
   status: 'APPLICABLE';
+  histogram: HistogramKind;
   route: string;
   durationSeconds: string;
   counts: RouteSlowCounts;
@@ -69,6 +114,7 @@ export type RouteSlowAnalysis =
   | Refusal
   | (RouteSlowCounts & {
       status: RouteSlowVerdict;
+      histogram: HistogramKind;
       route: string;
       durationSeconds: string;
       lower: Rational | null;
@@ -131,10 +177,10 @@ export function prepareRouteSlowShare(
     if (stream.diagnostics.length)
       return { status: stream.diagnostics[0].status, diagnostic: stream.diagnostics[0] };
     const { identity } = stream;
-    if (identity.type !== 'histogram')
+    if (identity.type !== 'histogram' && identity.type !== 'exponentialHistogram')
       fail(
         'UNSUPPORTED_TYPE',
-        'The route slow-share mode requires an explicit-bucket Histogram.',
+        'The route slow-share mode requires an explicit-bucket Histogram or an ExponentialHistogram.',
         undefined,
         'UNSUPPORTED_INPUT',
       );
@@ -163,8 +209,14 @@ export function prepareRouteSlowShare(
     if (!interval) fail('INTERVAL_NOT_SELECTED', 'Select one complete collection interval.');
     if (!selection.route)
       fail('ROUTE_NOT_SELECTED', `Enter the exact ${HTTP_ROUTE_ATTRIBUTE} value to analyze.`);
+    if (identity.type === 'exponentialHistogram')
+      return prepareExponential(
+        interval.points,
+        selection,
+        readExactDuration(selection.durationSeconds),
+      );
     const threshold = readDuration(selection.durationSeconds);
-    const counts: RouteSlowCounts = { K: 0n, E: 0n, F: 0n, S: 0n, other: 0n };
+    const counts: RouteSlowCounts = { K: 0n, E: 0n, B: 0n, F: 0n, S: 0n, X: 0n, other: 0n };
     const seen = new Set<string>();
     const points: RoutePoint[] = interval.points.map((p, i) => {
       const path = `selectedInterval.points[${i}]`;
@@ -219,6 +271,7 @@ export function prepareRouteSlowShare(
     });
     return {
       status: 'APPLICABLE',
+      histogram: 'explicit',
       route: selection.route,
       durationSeconds: selection.durationSeconds,
       counts,
@@ -230,14 +283,93 @@ export function prepareRouteSlowShare(
   }
 }
 
+// Each point keeps its own scale and offset; distributions are never rescaled or merged.
+function prepareExponential(
+  raw: Stream['intervals'][number]['points'],
+  selection: RouteSlowSelection,
+  threshold: ExactDuration,
+): RouteSlowPrepared {
+  const counts: RouteSlowCounts = { K: 0n, E: 0n, B: 0n, F: 0n, S: 0n, X: 0n, other: 0n };
+  const seen = new Set<string>();
+  const points: RoutePoint[] = raw.map((p, i) => {
+    const path = `selectedInterval.points[${i}]`;
+    const attrs = attributes(p.attributes, `${path}.attributes`);
+    const key = canonical(attrs);
+    if (seen.has(key))
+      fail(
+        'DUPLICATE_POINT',
+        'Repeated measurement attribute sets within one interval are ambiguous or duplicate exports.',
+        path,
+      );
+    seen.add(key);
+    const point = readExponentialPoint(p, path);
+    const overflow = overflowShape(attrs, path);
+    const base = { attributes: attrs, count: point.count.toString(), overflow };
+    if (point.count === 0n) return { ...base, role: overflow ? 'overflow' : 'empty' };
+    const route = overflow ? undefined : readRoute(attrs, path);
+    if (point.negative.bucketCounts.some((c) => c > 0n))
+      fail(
+        'NEGATIVE_DURATIONS',
+        'The point has observations in negative buckets. An HTTP request duration cannot be negative, so the data contradict the model.',
+        `${path}.negative`,
+        'UNSUPPORTED_INPUT',
+      );
+    if (route !== undefined && route !== selection.route) {
+      counts.other += point.count;
+      return { ...base, role: 'other_route', route };
+    }
+    const c = classifyExponential(point, threshold);
+    if (overflow) {
+      counts.F += c.fast;
+      counts.S += c.slow;
+      counts.X += c.uncertain;
+    } else {
+      counts.K += point.count;
+      counts.E += c.slow;
+      counts.B += c.uncertain;
+    }
+    return {
+      ...base,
+      role: overflow ? 'overflow' : 'selected_route',
+      ...(route === undefined ? {} : { route }),
+      fast: c.fast.toString(),
+      slow: c.slow.toString(),
+      uncertain: c.uncertain.toString(),
+      exponential: {
+        scale: point.scale,
+        zeroThreshold: point.zeroThreshold,
+        zeroCount: point.zeroCount.toString(),
+        positive: {
+          offset: point.positive.offset,
+          bucketCounts: point.positive.bucketCounts.map(String),
+        },
+        classification: { zero: c.zero, crossing: c.crossing },
+      },
+    };
+  });
+  return {
+    status: 'APPLICABLE',
+    histogram: 'exponential',
+    route: selection.route,
+    durationSeconds: selection.durationSeconds,
+    counts,
+    points,
+    checks: EXPONENTIAL_ROUTE_CHECKS,
+  };
+}
+
 // Reuses prepared counts when only the maximum share or the confirmation changes.
 //
-// With K > 0 and f, s the fast and slow overflow observations that belong to the route,
-// the share is (E + s) / (K + f + s). It rises with s and falls with f, so
-//   lower = E / (K + F)          (all fast overflow, no slow overflow)
-//   upper = (E + S) / (K + S)    (all slow overflow, no fast overflow)
-// The rest of the overflow can belong to other routes. With K = 0 the route may have had
-// no requests at all, so no share is defined and nothing is claimed.
+// With K > 0, e the slow known requests (L <= e <= U) and f, s the fast and slow overflow
+// observations that belong to the route, the share is (e + s) / (K + f + s). It rises with
+// e and s and falls with f, so
+//   lower = L / (K + F_max)            e = L, uncertain overflow all fast and the route's,
+//                                      no slow overflow
+//   upper = (U + S_max) / (K + S_max)  e = U, uncertain overflow all slow and the route's,
+//                                      no fast overflow
+// Each is one consistent assignment: an uncertain overflow observation is fast in the first
+// and slow in the second, never both at once. The rest of the overflow can belong to other
+// routes. With K = 0 the route may have had no requests, so nothing is claimed.
 export function calculateRouteSlowShare(
   prepared: RouteSlowPreparation,
   settings: Pick<RouteSlowSettings, 'maxSlowPercent' | 'contractConfirmed'>,
@@ -260,17 +392,18 @@ export function calculateRouteSlowShare(
         'Enter the maximum slow-request share as a decimal percentage from 0 to 100, using a dot and at most 100 digits.',
       );
     }
-    const { K, E, F, S } = prepared.counts;
+    const { K, E, B, F, S, X } = prepared.counts;
     const base = {
       ...prepared.counts,
+      histogram: prepared.histogram,
       route: prepared.route,
       durationSeconds: prepared.durationSeconds,
       maximum,
       points: prepared.points,
     };
     if (K === 0n) return { ...base, status: 'NO_ROUTE_OBSERVATIONS', lower: null, upper: null };
-    const lower = { numerator: E, denominator: K + F };
-    const upper = { numerator: E + S, denominator: K + S };
+    const lower = { numerator: E, denominator: K + F + X };
+    const upper = { numerator: E + B + S + X, denominator: K + S + X };
     const status =
       compare(upper, maximum) <= 0n
         ? 'WITHIN_LIMIT'
@@ -303,8 +436,9 @@ export function routeCandidates(stream: Stream, intervalId: string): string[] {
 
 // Boundaries, in seconds, that exist in every non-empty point that would take part in the
 // calculation for this route. With no such point, every boundary of the interval is offered.
+// An exponential histogram has no shared explicit boundaries; its threshold is typed.
 export function durationCandidates(stream: Stream, intervalId: string, route: string): string[] {
-  if (!route) return [];
+  if (!route || stream.identity.type !== 'histogram') return [];
   const participating: Set<number>[] = [];
   const every = new Set<number>();
   for (const p of stream.intervals.find((i) => i.id === intervalId)?.points ?? [])

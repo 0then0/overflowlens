@@ -367,8 +367,23 @@ describe('metric scope', () => {
   test('exponential histograms are unsupported', () => {
     const raw = httpFixture([{ status: 200 }]);
     const m = raw.resourceMetrics[0].scopeMetrics[0].metrics[0] as Record<string, unknown>;
-    m.exponentialHistogram = m.histogram;
+    // A valid exponential point: it imports, and this mode refuses it by type.
+    const [point] = (m.histogram as { dataPoints: Record<string, unknown>[] }).dataPoints;
+    m.exponentialHistogram = {
+      aggregationTemporality: 1,
+      dataPoints: [
+        {
+          attributes: point.attributes,
+          startTimeUnixNano: point.startTimeUnixNano,
+          timeUnixNano: point.timeUnixNano,
+          count: '1',
+          scale: 3,
+          positive: { offset: -8, bucketCounts: ['1'] },
+        },
+      ],
+    };
     delete m.histogram;
+    expect(importFixture(raw).streams[0].diagnostics).toEqual([]);
     expect(runHttp(importFixture(raw).streams[0])).toMatchObject({
       diagnostic: { code: 'UNSUPPORTED_TYPE' },
     });

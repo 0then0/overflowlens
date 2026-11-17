@@ -1,0 +1,756 @@
+{
+  "resourceMetrics":  [
+    {
+      "resource":  {
+        "attributes":  [
+          {
+            "key":  "service.name",
+            "value":  {
+              "stringValue":  "overflowlens-route-exponential-validation"
+            }
+          }
+        ]
+      },
+      "scopeMetrics":  [
+        {
+          "scope":  {
+            "name":  "overflowlens.http.route.exponential.validation"
+          },
+          "metrics":  [
+            {
+              "name":  "http.server.request.duration",
+              "unit":  "s",
+              "exponentialHistogram":  {
+                "dataPoints":  [
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/admin/00"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "5",
+                    "sum":  3.8,
+                    "scale":  3,
+                    "positive":  {
+                      "offset":  -19,
+                      "bucketCounts":  [
+                        "4",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "1"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.2,
+                    "max":  3
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/admin/01"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "5",
+                    "sum":  3.8,
+                    "scale":  3,
+                    "positive":  {
+                      "offset":  -19,
+                      "bucketCounts":  [
+                        "4",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "1"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.2,
+                    "max":  3
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/admin/03"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "5",
+                    "sum":  3.8,
+                    "scale":  3,
+                    "positive":  {
+                      "offset":  -19,
+                      "bucketCounts":  [
+                        "4",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "1"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.2,
+                    "max":  3
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/cart"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "120",
+                    "sum":  32,
+                    "scale":  2,
+                    "positive":  {
+                      "offset":  -23,
+                      "bucketCounts":  [
+                        "100",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "20"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.02,
+                    "max":  1.5
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/search"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "75",
+                    "sum":  27.79999999999999,
+                    "scale":  3,
+                    "positive":  {
+                      "offset":  -19,
+                      "bucketCounts":  [
+                        "60",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "10",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "5"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.2,
+                    "max":  2.5
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "POST"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/checkout"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "65",
+                    "sum":  23.249999999999996,
+                    "scale":  2,
+                    "positive":  {
+                      "offset":  -18,
+                      "bucketCounts":  [
+                        "30",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "10",
+                        "10",
+                        "0",
+                        "5",
+                        "0",
+                        "0",
+                        "6",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "4"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.05,
+                    "max":  2.2
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/orders"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "65",
+                    "sum":  25,
+                    "scale":  3,
+                    "positive":  {
+                      "offset":  -35,
+                      "bucketCounts":  [
+                        "50",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "15"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.05,
+                    "max":  1.5
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/admin/02"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "5",
+                    "sum":  3.8,
+                    "scale":  3,
+                    "positive":  {
+                      "offset":  -19,
+                      "bucketCounts":  [
+                        "4",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "1"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.2,
+                    "max":  3
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/admin/04"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "5",
+                    "sum":  3.8,
+                    "scale":  3,
+                    "positive":  {
+                      "offset":  -19,
+                      "bucketCounts":  [
+                        "4",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "1"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.2,
+                    "max":  3
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/admin/05"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "5",
+                    "sum":  3.8,
+                    "scale":  3,
+                    "positive":  {
+                      "offset":  -19,
+                      "bucketCounts":  [
+                        "4",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "1"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.2,
+                    "max":  3
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/checkout"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "423",
+                    "sum":  87.15000000000006,
+                    "scale":  2,
+                    "zeroCount":  "3",
+                    "positive":  {
+                      "offset":  -26,
+                      "bucketCounts":  [
+                        "50",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "80",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "100",
+                        "0",
+                        "0",
+                        "60",
+                        "0",
+                        "30",
+                        "35",
+                        "0",
+                        "45",
+                        "0",
+                        "10",
+                        "0",
+                        "6",
+                        "0",
+                        "0",
+                        "0",
+                        "4"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0,
+                    "max":  1.7
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/static"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "40",
+                    "sum":  0.16000000000000011,
+                    "scale":  8,
+                    "positive":  {
+                      "offset":  -2040,
+                      "bucketCounts":  [
+                        "40"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.004,
+                    "max":  0.004
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/health"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344228351000",
+                    "timeUnixNano":  "1794949344228654000",
+                    "count":  "35",
+                    "sum":  0.03000000000000002,
+                    "scale":  8,
+                    "zeroCount":  "5",
+                    "positive":  {
+                      "offset":  -2552,
+                      "bucketCounts":  [
+                        "30"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0,
+                    "max":  0.001
+                  }
+                ],
+                "aggregationTemporality":  1
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

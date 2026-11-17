@@ -4,6 +4,9 @@ This file summarizes user-visible changes. Detailed compatibility and launch ins
 
 ## Unreleased
 
+- Extend the route slow-share mode to delta `ExponentialHistogram` exports of `http.server.request.duration` (unit `s`). The duration threshold is typed in seconds. Each bucket, with its own point's `scale` and `offset`, is certainly fast, certainly slow or uncertain when its range contains the threshold or floating-point error could change the comparison; the zero bucket follows `zeroThreshold`. With `L` and `U` the certainly and possibly slow known requests and `F_max`, `S_max` the possibly fast and slow overflow observations, the bounds are `L / (K + F_max)` … `(U + S_max) / (K + S_max)`. Non-empty negative buckets, unsupported scales and invalid indexes or counts are refused. Reports use the new schema v6; explicit-bucket route reports keep schema v5 and the existing threshold selection.
+- Validate it with real OpenTelemetry Go SDK exponential histograms, a small cardinality limit, a no-overflow control and a case without observations of the selected route, checking every exported bucket against an exact placement of the recorded durations (`npm run validate:http-route-exponential`).
+
 ## [0.5.0](docs/releases/v0.5.0.md)
 
 - Add a route slow-share mode for delta `http.server.request.duration` histograms (unit `s`): after SDK overflow, bound the share of requests of one exact `http.route` that are slower than a chosen explicit bucket boundary. Overflow keeps its buckets but loses the route, so the bounds are `E / (K + F)` … `(E + S) / (K + S)`, with other routes excluded from the denominator. With no known request of the route, no share or verdict is reported. Reports use schema v5 and record application version 0.5.0. Existing modes and schemas v1 to v4 are unchanged.

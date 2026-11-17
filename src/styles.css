@@ -636,6 +636,14 @@ dd code {
 .counts > div:last-child {
   border: 0;
 }
+@media (min-width: 1001px) {
+  .counts.six {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .counts.six > div:nth-child(3n) {
+    border: 0;
+  }
+}
 .counts span {
   display: block;
   font-size: 12px;
@@ -910,6 +918,9 @@ footer {
 
 .selection {
   margin: 0 0 16px;
+}
+.counts + .selection {
+  margin-top: 16px;
 }
 
 .checks {

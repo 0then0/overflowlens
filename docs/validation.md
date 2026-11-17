@@ -96,6 +96,16 @@ The harness fails if conservation, the overflow split or truth containment fails
 
 ## Synthetic controls
 
+## Exponential route slow-share validation
+
+`npm run validate:http-route-exponential` runs `go run ./http route-exponential`, then `tests/http-route-exponential-sdk.test.ts`. It uses the same pinned SDK and a real SDK `Float64Histogram` named `http.server.request.duration` with unit `s`, delta temporality and a View that selects `AggregationBase2ExponentialHistogram{MaxSize: 40, MaxScale: 8}`. The small `MaxSize` makes wide attribute sets downscale, so points have different scales (1, 2, 3 and 8) and offsets. Known durations, including zero, 0.3 s and 0.5 s, are recorded directly through the Metric API; this is SDK aggregation validation, not a measurement of real HTTP latency. Versions, the plan and the journal are in `fixtures/http/route-exp-manifest.json`.
+
+The harness recomputes every exported bucket of every retained point, and of the overflow from the journal of the attribute sets the SDK did not retain, at that point's own scale with exact big-integer comparisons, and requires the SDK counts to match. The true slow share of `/checkout` is computed from the journal by exact rational comparison of each recorded double with the decimal threshold (the double nearest 0.3 is below 0.3, so it is not slow). OverflowLens then imports the exports normally and must contain the truth at both thresholds:
+
+- `route-exp-no-overflow.json`, limit 2,000: at 0.3 s the threshold lies inside a bucket, so even without overflow the bounds are 80/488 … 125/488 (≈16.39% … ≈25.61%) around the true 105/488. At 0.5 s, a bucket boundary at every scale ≥ 0, the share is exactly 30/488.
+- `route-exp-overflow.json`, limit 5: `/checkout` GET is retained and its POST requests and other routes overflow. At 0.3 s route loss widens the bounds to 65/582 … 156/479 (≈11.17% … ≈32.57%); at 0.5 s they are 20/587 … 51/454 around 30/488.
+- `route-exp-absent.json`, limit 5: every `/checkout` request arrives after the limit, so the result is `NO_ROUTE_OBSERVATIONS`.
+
 Synthetic route slow-share inputs cover missing and invalid routes, absent buckets, unmatched boundaries, other units and temporalities, values above the safe integer range, exact threshold equality and the exhaustive assignment check. Malformed controls alter copies of valid exports to test cumulative HTTP windows (reordered points and attributes, integers above int64, zero increments, exact threshold equality, changed starts, decreasing counts, mismatched series, changed bucket layout and corrupt points) and individual decreases, missing counterparts, stream mismatches and inconsistent collection boundaries. They are test inputs, not SDK-produced fixtures.
 
 Other synthetic controls cover large integer precision, per-series starts, attribute identity order, conflicting definitions, flags, overflow shape, exact threshold equality, deterministic reports and reuse of prepared counts. The mathematical demo and endpoint histories demonstrate information loss; they are distinct from the independently recorded SDK workload.

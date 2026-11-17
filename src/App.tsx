@@ -38,6 +38,7 @@ import {
   HTTP_METRIC,
   HTTP_ROUTE_ATTRIBUTE,
   HTTP_ROUTE_CONTRACT,
+  HTTP_ROUTE_EXPONENTIAL_CONTRACT,
   HTTP_STATUS_ATTRIBUTE,
   type ImportData,
   InputError,
@@ -78,7 +79,7 @@ function supports(mode: Mode, s: Stream) {
   if (s.diagnostics.length) return false;
   if (mode === 'http-route')
     return (
-      identity.type === 'histogram' &&
+      (identity.type === 'histogram' || identity.type === 'exponentialHistogram') &&
       identity.name === HTTP_METRIC &&
       identity.temporality === 'DELTA'
     );
@@ -721,9 +722,11 @@ export function App() {
                       {stream.identity.temporality} ·{' '}
                       {stream.identity.type === 'histogram'
                         ? 'explicit buckets'
-                        : stream.identity.monotonic
-                          ? 'monotonic'
-                          : 'non-monotonic'}
+                        : stream.identity.type === 'exponentialHistogram'
+                          ? 'exponential buckets'
+                          : stream.identity.monotonic
+                            ? 'monotonic'
+                            : 'non-monotonic'}
                     </dd>
                     <dt>Schema URLs</dt>
                     <dd>
@@ -781,43 +784,84 @@ export function App() {
                           ))}
                         </datalist>
                       </label>
-                      <label>
-                        Duration threshold
-                        <select
-                          disabled={!stream || !settings.route || busy}
-                          value={settings.durationSeconds}
-                          onChange={(e) =>
-                            setSettings((s) => ({
-                              ...s,
-                              durationSeconds: e.target.value,
-                              contractConfirmed: false,
-                            }))
-                          }
-                        >
-                          <option value="">Select a bucket boundary</option>
-                          {durations.map((d) => (
-                            <option key={d} value={d}>
-                              {d} s ({millisecondsLabel(d)})
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      {settings.route && !durations.length && (
-                        <p className="fine" role="status" data-testid="no-boundary">
-                          No bucket boundary is shared by every non-empty overflow and
-                          selected-route point, so no duration threshold can be offered and the
-                          calculation is refused. Nothing is interpolated or rounded to a
-                          neighboring boundary.
+                      {stream?.identity.type === 'exponentialHistogram' ? (
+                        <label>
+                          Duration threshold (seconds)
+                          <input
+                            inputMode="decimal"
+                            placeholder="e.g. 0.3"
+                            autoComplete="off"
+                            disabled={!stream || !settings.route || busy}
+                            value={settings.durationSeconds}
+                            onChange={(e) =>
+                              setSettings((s) => ({
+                                ...s,
+                                durationSeconds: e.target.value,
+                                contractConfirmed: false,
+                              }))
+                            }
+                          />
+                          {settings.durationSeconds &&
+                            /^\d+(?:\.\d+)?(?:[eE][+-]?\d+)?$/.test(settings.durationSeconds) && (
+                              <span className="fine">
+                                {millisecondsLabel(settings.durationSeconds)} (display only)
+                              </span>
+                            )}
+                        </label>
+                      ) : (
+                        <label>
+                          Duration threshold
+                          <select
+                            disabled={!stream || !settings.route || busy}
+                            value={settings.durationSeconds}
+                            onChange={(e) =>
+                              setSettings((s) => ({
+                                ...s,
+                                durationSeconds: e.target.value,
+                                contractConfirmed: false,
+                              }))
+                            }
+                          >
+                            <option value="">Select a bucket boundary</option>
+                            {durations.map((d) => (
+                              <option key={d} value={d}>
+                                {d} s ({millisecondsLabel(d)})
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+                      {settings.route &&
+                        !durations.length &&
+                        stream?.identity.type !== 'exponentialHistogram' && (
+                          <p className="fine" role="status" data-testid="no-boundary">
+                            No bucket boundary is shared by every non-empty overflow and
+                            selected-route point, so no duration threshold can be offered and the
+                            calculation is refused. Nothing is interpolated or rounded to a
+                            neighboring boundary.
+                          </p>
+                        )}
+                      {stream?.identity.type === 'exponentialHistogram' ? (
+                        <p className="fine" data-testid="criterion">
+                          Criterion: a request is <strong>slow</strong> when its duration is
+                          strictly greater than the threshold; a duration exactly equal to it is not
+                          slow. Type any positive number of seconds. Each exponential bucket, with
+                          its own point&apos;s scale and offset, is certainly fast, certainly slow
+                          or <strong>uncertain</strong> when its range contains the threshold.
+                          Uncertain observations are never interpolated. The route is matched
+                          exactly. Every ordinary non-empty point needs one string{' '}
+                          <code>{HTTP_ROUTE_ATTRIBUTE}</code>, and negative buckets must be empty.
+                        </p>
+                      ) : (
+                        <p className="fine" data-testid="criterion">
+                          Criterion: a request is <strong>slow</strong> when its duration is
+                          strictly greater than the threshold; a duration exactly equal to it is not
+                          slow. The threshold must be an exact explicit bucket boundary of the
+                          overflow and selected-route points, in seconds; it is never interpolated
+                          or rounded. The route is matched exactly. Every ordinary non-empty point
+                          needs one string <code>{HTTP_ROUTE_ATTRIBUTE}</code>.
                         </p>
                       )}
-                      <p className="fine" data-testid="criterion">
-                        Criterion: a request is <strong>slow</strong> when its duration is strictly
-                        greater than the threshold; a duration exactly equal to it is not slow. The
-                        threshold must be an exact explicit bucket boundary of the overflow and
-                        selected-route points, in seconds; it is never interpolated or rounded. The
-                        route is matched exactly. Every ordinary non-empty point needs one string{' '}
-                        <code>{HTTP_ROUTE_ATTRIBUTE}</code>.
-                      </p>
                     </>
                   )}
                   {mode === 'http' && (
@@ -949,7 +993,9 @@ export function App() {
                       : mode === 'http'
                         ? HTTP_CONTRACT
                         : mode === 'http-route'
-                          ? HTTP_ROUTE_CONTRACT
+                          ? stream?.identity.type === 'exponentialHistogram'
+                            ? HTTP_ROUTE_EXPONENTIAL_CONTRACT
+                            : HTTP_ROUTE_CONTRACT
                           : CONTRACT}
                 </span>
               </label>

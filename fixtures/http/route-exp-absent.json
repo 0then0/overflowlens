@@ -1,0 +1,266 @@
+{
+  "resourceMetrics":  [
+    {
+      "resource":  {
+        "attributes":  [
+          {
+            "key":  "service.name",
+            "value":  {
+              "stringValue":  "overflowlens-route-exponential-validation"
+            }
+          }
+        ]
+      },
+      "scopeMetrics":  [
+        {
+          "scope":  {
+            "name":  "overflowlens.http.route.exponential.validation"
+          },
+          "metrics":  [
+            {
+              "name":  "http.server.request.duration",
+              "unit":  "s",
+              "exponentialHistogram":  {
+                "dataPoints":  [
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/search"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344231382000",
+                    "timeUnixNano":  "1794949344231685000",
+                    "count":  "75",
+                    "sum":  27.79999999999999,
+                    "scale":  3,
+                    "positive":  {
+                      "offset":  -19,
+                      "bucketCounts":  [
+                        "60",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "10",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "5"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.2,
+                    "max":  2.5
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/static"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344231382000",
+                    "timeUnixNano":  "1794949344231685000",
+                    "count":  "40",
+                    "sum":  0.16000000000000011,
+                    "scale":  8,
+                    "positive":  {
+                      "offset":  -2040,
+                      "bucketCounts":  [
+                        "40"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.004,
+                    "max":  0.004
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/health"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344231382000",
+                    "timeUnixNano":  "1794949344231685000",
+                    "count":  "35",
+                    "sum":  0.03000000000000002,
+                    "scale":  8,
+                    "zeroCount":  "5",
+                    "positive":  {
+                      "offset":  -2552,
+                      "bucketCounts":  [
+                        "30"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0,
+                    "max":  0.001
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "otel.metric.overflow",
+                        "value":  {
+                          "boolValue":  true
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344231382000",
+                    "timeUnixNano":  "1794949344231685000",
+                    "count":  "583",
+                    "sum":  158.1999999999997,
+                    "scale":  2,
+                    "zeroCount":  "3",
+                    "positive":  {
+                      "offset":  -26,
+                      "bucketCounts":  [
+                        "50",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "160",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "100",
+                        "0",
+                        "0",
+                        "84",
+                        "0",
+                        "40",
+                        "45",
+                        "0",
+                        "50",
+                        "0",
+                        "10",
+                        "6",
+                        "6",
+                        "0",
+                        "0",
+                        "15",
+                        "4",
+                        "4",
+                        "0",
+                        "6"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0,
+                    "max":  3
+                  },
+                  {
+                    "attributes":  [
+                      {
+                        "key":  "http.request.method",
+                        "value":  {
+                          "stringValue":  "GET"
+                        }
+                      },
+                      {
+                        "key":  "http.route",
+                        "value":  {
+                          "stringValue":  "/cart"
+                        }
+                      }
+                    ],
+                    "startTimeUnixNano":  "1794949344231382000",
+                    "timeUnixNano":  "1794949344231685000",
+                    "count":  "120",
+                    "sum":  32,
+                    "scale":  2,
+                    "positive":  {
+                      "offset":  -23,
+                      "bucketCounts":  [
+                        "100",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "0",
+                        "20"
+                      ]
+                    },
+                    "negative":  {},
+                    "min":  0.02,
+                    "max":  1.5
+                  }
+                ],
+                "aggregationTemporality":  1
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

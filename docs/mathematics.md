@@ -68,6 +68,17 @@ upper = (E + S) / (K + S)  f = 0, s = S
 
 Both are attained by those assignments; the thresholds are decided as above (`upper ≤ p` within, `lower > p` exceeds). Attributing all overflow to the route, or using `K + F + S` as a fixed denominator, would be wrong: it forces every other route's overflow observations into this route. With `K = 0` the data admit `f = s = 0`, a route without requests, so the share is undefined and nothing is reported, even if the overflow is not empty. Example: `K=900, E=9, F=90, S=10` gives `9/990 … 19/910`, about 0.91% … 2.09%.
 
+### Exponential histograms
+
+An exponential bucket can contain the threshold, so some observations are neither certainly fast nor certainly slow. Split the selected route's `K` known requests into `E` certainly slow and `B` uncertain, and the overflow into `F` certainly fast, `S` certainly slow and `X` uncertain. Let `L = E`, `U = E + B`, `F_max = F + X` and `S_max = S + X`. With `e` the slow known requests (`L ≤ e ≤ U`), and `f`, `s` the fast and slow overflow observations owned by the route, the share is `(e + s) / (K + f + s)`, which rises with `e` and `s` and falls with `f`:
+
+```text
+lower = L / (K + F_max)          e = L, every uncertain observation fast, f = F_max, s = 0
+upper = (U + S_max) / (K + S_max)  e = U, every uncertain observation slow, f = 0, s = S_max
+```
+
+Each bound is one admissible assignment: an uncertain overflow observation is fast in the first and slow in the second, never both in one. Both are attainable because a bucket that contains the threshold admits values on either side of it. With `B = X = 0` these are the explicit-bucket formulas. The test suite enumerates every resolution of the uncertain known requests, every split of the overflow by route and every side of the owned uncertain overflow for small counts, and checks the bucket classification of scales −3…3 against an exact big-integer oracle.
+
 Durations are never interpolated within a bucket, and the bounds are not a confidence interval. The test suite enumerates all `f` and `s` for `K=1..7`, `E=0..K`, `F=0..6`, `S=0..6` and checks the minimum and maximum against the formulas.
 
 ## Why outcomes cannot be recovered
