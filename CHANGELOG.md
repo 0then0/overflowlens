@@ -4,7 +4,9 @@ This file summarizes user-visible changes. Detailed compatibility and launch ins
 
 ## Unreleased
 
-- Extend the route slow-share mode to delta `ExponentialHistogram` exports of `http.server.request.duration` (unit `s`). The duration threshold is typed in seconds. Each bucket, with its own point's `scale` and `offset`, is certainly fast, certainly slow or uncertain when its range contains the threshold or floating-point error could change the comparison; the zero bucket follows `zeroThreshold`. With `L` and `U` the certainly and possibly slow known requests and `F_max`, `S_max` the possibly fast and slow overflow observations, the bounds are `L / (K + F_max)` … `(U + S_max) / (K + S_max)`. Non-empty negative buckets, unsupported scales and invalid indexes or counts are refused. Reports use the new schema v6; explicit-bucket route reports keep schema v5 and the existing threshold selection.
+## [0.6.0](docs/releases/v0.6.0.md)
+
+- Extend the route slow-share mode to delta `ExponentialHistogram` exports of `http.server.request.duration` (unit `s`). The duration threshold is typed in seconds. Each bucket, with its own point's `scale` and `offset`, is certainly fast, certainly slow or uncertain when its range contains the threshold or floating-point error could change the comparison; the zero bucket follows `zeroThreshold`. With `L` and `U` the certainly and possibly slow known requests and `F_max`, `S_max` the possibly fast and slow overflow observations, the bounds are `L / (K + F_max)` … `(U + S_max) / (K + S_max)`. Non-empty negative buckets, unsupported scales and invalid indexes or counts are refused. Reports use the new schema v6 and record application version 0.6.0; explicit-bucket route reports keep schema v5 and the existing threshold selection.
 - Validate it with real OpenTelemetry Go SDK exponential histograms, a small cardinality limit, a no-overflow control and a case without observations of the selected route, checking every exported bucket against an exact placement of the recorded durations (`npm run validate:http-route-exponential`).
 
 ## [0.5.0](docs/releases/v0.5.0.md)
